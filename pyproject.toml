@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "poetry-plugin-lambda-build"
-version = "0.1.0"
+version = "0.1.2"
 description = "The plugin for poetry that allows you to build zip packages suited for serverless deployment like AWS Lambda, Google App Engine, Azure App Service, and more..."
 authors = ["Michał Murawski <mmurawski777@gmail.com>"]
 readme = "README.md"
@@ -13,14 +13,5 @@ docker = "^7.0.0"
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
 
-
-[tool.poetry-plugin-lambda-build]
-docker_image = "public.ecr.aws/sam/build-python3.11:latest-x86_64"
-docker_network = "host"
-layer_artifact_name = "layer.zip"
-layer_install_dir = "lambda/python"
-handler_artifact_name = "handler.zip"
-
-
 [tool.poetry.plugins."poetry.application.plugin"]
-build-lambda = "poetry_lambda_plugin.plugin:LambdaPlugin"
+build-lambda = "poetry_plugin_lambda_build.plugin:LambdaPlugin"
