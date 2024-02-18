@@ -1,7 +1,7 @@
 import os
 import subprocess
 from tempfile import TemporaryDirectory
-from typing import ByteString, Tuple
+from typing import ByteString
 
 from poetry.console.commands.env_command import EnvCommand
 
@@ -75,7 +75,7 @@ def create_separate_layer_package(
             layer_output_dir = os.path.join(layer_output_dir, install_dir)
 
         self.line(f"Generating requirements file...", style="info")
-        self.line(f"Executing: {poetry_export_cmd}", style="info")
+        self.line(f"Executing: {poetry_export_cmd}", style="debug")
         output = _run_process(self, poetry_export_cmd)
 
         with open(requirements_path, "w") as f:
@@ -88,7 +88,6 @@ def create_separate_layer_package(
                 install_deps_cmd = INSTALL_DEPS_CMD.format(
                     container_cache_dir=CONTAINER_CACHE_DIR
                 )
-                self.line(install_deps_cmd, style="info")
                 result = container.exec_run(f'sh -c "{install_deps_cmd}"', stream=True)
                 for line in result.output:
                     self.line(line.strip().decode("utf-8"), style="info")
@@ -99,18 +98,18 @@ def create_separate_layer_package(
             install_deps_cmd = INSTALL_DEPS_CMD.format(package_dir=layer_output_dir)
 
             self.line(f"Installing requirements", style="info")
-            self.line(f"Executing: {install_deps_cmd}", style="info")
+            # self.line(f"Executing: {install_deps_cmd}", style="info")
             _run_process(self, install_deps_cmd)
 
         self.line(f"Building {target}...", style="info")
-
+        os.makedirs(os.path.dirname(target), exist_ok=True)
         create_zip_package(
             layer_output_dir.removesuffix(install_dir)
             if install_dir
             else layer_output_dir,
             target,
         )
-        self.line(f"Successfully build target: {target}...", style="info")
+        self.line(f"target successfully built: {target}...", style="info")
 
 
 def create_separated_handler_package(self: EnvCommand, options: dict):
@@ -127,16 +126,17 @@ def create_separated_handler_package(self: EnvCommand, options: dict):
 
         install_cmd = INSTALL_WITHOUT_NO_DEPS_CMD.format(package_dir=package_dir)
 
-        self.line(f"Executing: {install_cmd}", style="info")
+        self.line(f"Executing: {install_cmd}", style="debug")
 
         _run_process(self, install_cmd)
 
         self.line(f"Building target: {target}", style="info")
+        os.makedirs(os.path.dirname(target), exist_ok=True)
         create_zip_package(
             package_dir.removesuffix(install_dir) if install_dir else package_dir,
             target,
         )
-        self.line(f"Successfully build target: {target}...", style="info")
+        self.line(f"target successfully built: {target}...", style="info")
 
 
 def create_package(self: EnvCommand, options: dict, in_container: bool = True):
@@ -154,7 +154,7 @@ def create_package(self: EnvCommand, options: dict, in_container: bool = True):
             self.line("Building package in container", style="info")
             with run_container(self, **options["docker"]) as container:
                 cmd = INSTALL_PACKAGE_CMD.format(package_dir=package_dir)
-                self.line(f"Executing: {cmd}", style="info")
+                # self.line(f"Executing: {cmd}", style="info")
                 result = container.exec_run(f'sh -c "{cmd}"', stream=True)
 
                 for line in result.output:
@@ -164,10 +164,12 @@ def create_package(self: EnvCommand, options: dict, in_container: bool = True):
         else:
             self.line("Building package on local", style="info")
             cmd = INSTALL_PACKAGE_CMD.format(package_dir=package_dir)
-            self.line(f"Executing: {cmd}", style="info")
+            # self.line(f"Executing: {cmd}", style="info")
             _run_process(self, cmd)
 
+        os.makedirs(os.path.dirname(target), exist_ok=True)
         create_zip_package(
             package_dir.removesuffix(install_dir) if install_dir else package_dir,
             target,
         )
+        self.line(f"target successfully built: {target}...", style="info")

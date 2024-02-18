@@ -63,8 +63,11 @@ class BuildLambdaCommand(EnvCommand):
 
     arguments = [
         argument(
-            "override", 'Argument to override any configuration parameter.'
-            ' Ex. override="docker_dns=127.0.0.1"', multiple=False, optional=True
+            "override",
+            "Argument to override any configuration parameter."
+            ' Ex. override="docker_dns=127.0.0.1"',
+            multiple=False,
+            optional=True,
         ),
     ]
 
@@ -82,19 +85,18 @@ class BuildLambdaCommand(EnvCommand):
                     prefix, name = key.split("_", 1)
                     override_options[prefix][name] = value
                 except ValueError:
-                    raise Exception(
-                        f"override argument has wrong value: {override}")
+                    raise Exception(f"override argument has wrong value: {override}")
 
         pyproject_data = self.poetry.pyproject.data
         prefixes = ["layer", "handler", "docker", "artifacts"]
 
-        plugin_conf = get_path(pyproject_data, "tool.poetry-lambda-plugin")
+        plugin_conf = get_path(pyproject_data, "tool.poetry-plugin-lambda-build")
         for k in plugin_conf:
             for prefix in prefixes:
                 if k.startswith(prefix):
                     arg = k.removeprefix(prefix + "_")
                     options[prefix][arg] = plugin_conf[k]
-        
+
         options.update(override_options)
         return options
 

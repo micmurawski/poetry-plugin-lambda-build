@@ -54,11 +54,11 @@ def run_container(env_cmd: EnvCommand, *args, **kwargs):
     docker_container = get_docker_client().containers.run(
         image, **kwargs, **options, tty=True, detach=True
     )
-    env_cmd.line(f"Running docker container image: {image}", style="info")
+    env_cmd.line(f"Running docker container image: {image}", style="debug")
     try:
         yield docker_container
     finally:
-        env_cmd.line(f"Killing docker container...", style="info")
+        env_cmd.line(f"Killing docker container...", style="debug")
         docker_container.kill()
-        env_cmd.line(f"Removing docker container...", style="info")
+        env_cmd.line(f"Removing docker container...", style="debug")
         docker_container.remove(v=True)
