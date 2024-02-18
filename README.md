@@ -19,14 +19,14 @@ artifact_name = "package.zip"
 ```
 
 ### AWS Lambda - all in one - layer package
-```
+```.toml
 [tool.poetry-plugin-lambda-build]
 install_dir = "lambda/python"
 artifact_name = "layer.zip"
 ```
 ### AWS Lambda - separated - separate layer package and handler package
 
-```
+```.toml
 [tool.poetry-plugin-lambda-build]
 layer_artifact_name = "layer.zip"
 layer_install_dir = "lambda/python"
@@ -34,7 +34,7 @@ handler_artifact_name = "handler.zip"
 ```
 ### AWS Lambda - separated - separate layer package and handler package build in docker container
 
-```
+```.toml
 [tool.poetry-plugin-lambda-build]
 docker_image = "public.ecr.aws/sam/build-python3.11:latest-x86_64"
 docker_network = "host"
@@ -42,5 +42,3 @@ layer_artifact_name = "layer.zip"
 layer_install_dir = "lambda/python"
 handler_artifact_name = "handler.zip"
 ```
-
-
