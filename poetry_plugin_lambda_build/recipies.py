@@ -23,7 +23,7 @@ INSTALL_DEPS_CMD = (
     "pip install -q -t {container_cache_dir} --no-cache-dir -r /requirements.txt"
 )
 
-INSTALL_WITHOUT_NO_DEPS_CMD = (
+INSTALL_NO_DEPS_CMD = (
     "mkdir -p {package_dir} && poetry run pip install"
     " --quiet -t {package_dir} --no-cache-dir --no-deps . --upgrade"
 )
@@ -98,7 +98,7 @@ def create_separate_layer_package(
             install_deps_cmd = INSTALL_DEPS_CMD.format(package_dir=layer_output_dir)
 
             self.line(f"Installing requirements", style="info")
-            # self.line(f"Executing: {install_deps_cmd}", style="info")
+            self.line(f"Executing: {install_deps_cmd}", style="debug")
             _run_process(self, install_deps_cmd)
 
         self.line(f"Building {target}...", style="info")
@@ -124,7 +124,7 @@ def create_separated_handler_package(self: EnvCommand, options: dict):
             package_dir = os.path.join(package_dir, install_dir)
         self.line("Building handler package...", style="info")
 
-        install_cmd = INSTALL_WITHOUT_NO_DEPS_CMD.format(package_dir=package_dir)
+        install_cmd = INSTALL_NO_DEPS_CMD.format(package_dir=package_dir)
 
         self.line(f"Executing: {install_cmd}", style="debug")
 
@@ -154,7 +154,7 @@ def create_package(self: EnvCommand, options: dict, in_container: bool = True):
             self.line("Building package in container", style="info")
             with run_container(self, **options["docker"]) as container:
                 cmd = INSTALL_PACKAGE_CMD.format(package_dir=package_dir)
-                # self.line(f"Executing: {cmd}", style="info")
+                self.line(f"Executing: {cmd}", style="debug")
                 result = container.exec_run(f'sh -c "{cmd}"', stream=True)
 
                 for line in result.output:
@@ -164,7 +164,7 @@ def create_package(self: EnvCommand, options: dict, in_container: bool = True):
         else:
             self.line("Building package on local", style="info")
             cmd = INSTALL_PACKAGE_CMD.format(package_dir=package_dir)
-            # self.line(f"Executing: {cmd}", style="info")
+            self.line(f"Executing: {cmd}", style="debug")
             _run_process(self, cmd)
 
         os.makedirs(os.path.dirname(target), exist_ok=True)
