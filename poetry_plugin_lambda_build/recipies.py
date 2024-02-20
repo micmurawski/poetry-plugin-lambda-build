@@ -20,7 +20,7 @@ CURRENT_WORK_DIR = os.getcwd()
 INSTALL_DEPS_CMD = (
     "mkdir -p {container_cache_dir} && "
     "pip install -q --upgrade pip && "
-    "pip install -q -t {container_cache_dir} --no-cache-dir -r /requirements.txt"
+    "pip install -q -t {container_cache_dir} --no-cache-dir -r {requirements}"
 )
 
 INSTALL_NO_DEPS_CMD = (
@@ -86,7 +86,8 @@ def create_separate_layer_package(
                 copy_to(requirements_path, f"{container.id}:/requirements.txt")
                 self.line(f"Installing requirements", style="info")
                 install_deps_cmd = INSTALL_DEPS_CMD.format(
-                    container_cache_dir=CONTAINER_CACHE_DIR
+                    container_cache_dir=CONTAINER_CACHE_DIR,
+                    requirements="/requirements.txt",
                 )
                 result = container.exec_run(f'sh -c "{install_deps_cmd}"', stream=True)
                 for line in result.output:
@@ -95,7 +96,9 @@ def create_separate_layer_package(
                 os.makedirs(layer_output_dir, exist_ok=True)
                 copy_from(f"{container.id}:{CONTAINER_CACHE_DIR}/.", layer_output_dir)
         else:
-            install_deps_cmd = INSTALL_DEPS_CMD.format(package_dir=layer_output_dir)
+            install_deps_cmd = INSTALL_DEPS_CMD.format(
+                container_cache_dir=layer_output_dir, requirements=requirements_path
+            )
 
             self.line(f"Installing requirements", style="info")
             self.line(f"Executing: {install_deps_cmd}", style="debug")

@@ -78,6 +78,10 @@ class BuildLambdaCommand(EnvCommand):
 
         pyproject_data = self.poetry.pyproject.data
         override = self.argument("override")
+
+        if override.startswith("override="):
+            override.removeprefix("override=")
+
         if override:
             for param in override.split(";"):
                 try:
@@ -110,7 +114,7 @@ class BuildLambdaCommand(EnvCommand):
         elif _type == BuildType.SEPARATED:
             self.line("Building separated packages on local...", style="info")
             create_separate_layer_package(self, options, in_container=False)
-            create_separate_layer_package(self, options)
+            create_separate_layer_package(self, options, in_container=False)
         elif _type == BuildType.IN_CONTAINER_MERGED:
             create_package(self, options, in_container=True)
         else:
