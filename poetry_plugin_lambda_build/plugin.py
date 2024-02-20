@@ -85,7 +85,7 @@ class BuildLambdaCommand(EnvCommand):
         if override:
             for param in override.split(";"):
                 try:
-                    key, value = param.split("=")
+                    key, value = param.split("=", 1)
                     prefix, name = key.split("_", 1)
                     override_options[prefix][name] = value
                 except ValueError:
@@ -114,7 +114,7 @@ class BuildLambdaCommand(EnvCommand):
         elif _type == BuildType.SEPARATED:
             self.line("Building separated packages on local...", style="info")
             create_separate_layer_package(self, options, in_container=False)
-            create_separate_layer_package(self, options, in_container=False)
+            create_separated_handler_package(self, options, in_container=False)
         elif _type == BuildType.IN_CONTAINER_MERGED:
             create_package(self, options, in_container=True)
         else:

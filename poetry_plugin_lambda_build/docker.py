@@ -51,6 +51,9 @@ def run_container(env_cmd: EnvCommand, *args, **kwargs):
     if "dns" in kwargs:
         kwargs["dns"] = kwargs["dns"].split(",")
 
+    if "environment" in kwargs:
+        kwargs["environment"] = kwargs["environment"].split(",")
+
     docker_container = get_docker_client().containers.run(
         image, **kwargs, **options, tty=True, detach=True
     )
