@@ -80,7 +80,7 @@ class BuildLambdaCommand(EnvCommand):
         override = self.argument("override")
 
         if override.startswith("override="):
-            override.removeprefix("override=")
+            override = override.removeprefix("override=")
 
         if override:
             for param in override.split(";"):
