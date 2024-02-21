@@ -74,7 +74,7 @@ def create_separate_layer_package(
         if install_dir:
             layer_output_dir = os.path.join(layer_output_dir, install_dir)
 
-        self.line(f"Generating requirements file...", style="info")
+        self.line("Generating requirements file...", style="info")
         self.line(f"Executing: {poetry_export_cmd}", style="debug")
         output = _run_process(self, poetry_export_cmd)
 
@@ -84,7 +84,7 @@ def create_separate_layer_package(
         if in_container:
             with run_container(self, **options["docker"]) as container:
                 copy_to(requirements_path, f"{container.id}:/requirements.txt")
-                self.line(f"Installing requirements", style="info")
+                self.line("Installing requirements", style="info")
                 install_deps_cmd = INSTALL_DEPS_CMD.format(
                     container_cache_dir=CONTAINER_CACHE_DIR,
                     requirements="/requirements.txt",
@@ -100,7 +100,7 @@ def create_separate_layer_package(
                 container_cache_dir=layer_output_dir, requirements=requirements_path
             )
 
-            self.line(f"Installing requirements", style="info")
+            self.line("Installing requirements", style="info")
             self.line(f"Executing: {install_deps_cmd}", style="debug")
             _run_process(self, install_deps_cmd)
 

@@ -61,7 +61,7 @@ def run_container(env_cmd: EnvCommand, *args, **kwargs):
     try:
         yield docker_container
     finally:
-        env_cmd.line(f"Killing docker container...", style="debug")
+        env_cmd.line("Killing docker container...", style="debug")
         docker_container.kill()
-        env_cmd.line(f"Removing docker container...", style="debug")
+        env_cmd.line("Removing docker container...", style="debug")
         docker_container.remove(v=True)
