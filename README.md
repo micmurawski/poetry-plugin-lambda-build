@@ -21,7 +21,7 @@ Configure `pyproject.toml` with the following configuration. This is example for
 docker_image = "public.ecr.aws/sam/build-python3.11:latest-x86_64"
 docker_network = "host"
 layer_artifact_name = "artifacts/layer.zip"
-layer_install_dir = "lambda/python"
+layer_install_dir = "python"
 handler_artifact_name = "artifacts/handler.zip"
 ```
 
@@ -49,7 +49,7 @@ artifact_name = "package.zip"
 ### AWS Lambda - all in one - layer package
 ```.toml
 [tool.poetry-plugin-lambda-build]
-install_dir = "lambda/python"
+install_dir = "python"
 artifact_name = "layer.zip"
 ```
 ### AWS Lambda - separated - separate layer package and handler package
@@ -57,7 +57,7 @@ artifact_name = "layer.zip"
 ```.toml
 [tool.poetry-plugin-lambda-build]
 layer_artifact_name = "layer.zip"
-layer_install_dir = "lambda/python"
+layer_install_dir = "python"
 handler_artifact_name = "handler.zip"
 ```
 ### <a name="aws"></a>AWS Lambda - separated - separate layer package and handler package build in docker container
@@ -67,7 +67,7 @@ handler_artifact_name = "handler.zip"
 docker_image = "public.ecr.aws/sam/build-python3.11:latest-x86_64"
 docker_network = "host"
 layer_artifact_name = "layer.zip"
-layer_install_dir = "lambda/python"
+layer_install_dir = "python"
 handler_artifact_name = "handler.zip"
 ```
 
