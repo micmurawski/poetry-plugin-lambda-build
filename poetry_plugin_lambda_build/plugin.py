@@ -49,6 +49,7 @@ DEFAULT_OPTIONS = {
     "artifacts": {"path": "artifacts"},
     "without": None,
     "only": None,
+    "with": None,
     "install_dir": None,
     "artifact_path": "package.zip",
     "install_package_cmd": INSTALL_PACKAGE_CMD,

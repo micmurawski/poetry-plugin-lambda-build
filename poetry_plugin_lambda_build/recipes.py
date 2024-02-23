@@ -40,7 +40,6 @@ def create_separate_layer_package(
     self: EnvCommand, options: dict, in_container: bool = True
 ):
     with TemporaryDirectory() as tmp_dir:
-        without = options["without"]
         install_dir = get_path(options, "layer.install_dir")
         layer_output_dir = os.path.join(tmp_dir, "layer_output")
 
@@ -50,8 +49,15 @@ def create_separate_layer_package(
         requirements_path = os.path.join(tmp_dir, "requirements.txt")
 
         poetry_export_cmd = "poetry export --format=requirements.txt"
-        if without:
-            poetry_export_cmd.append(f"--without={without}")
+
+        if options["without"]:
+            poetry_export_cmd.append(f"--without={options['without']}")
+
+        if options["with"]:
+            poetry_export_cmd.append(f"--with={options['with']}")
+        
+        if options["only"]:
+            poetry_export_cmd.append(f"--only={options['only']}")
 
         if install_dir:
             layer_output_dir = os.path.join(layer_output_dir, install_dir)
