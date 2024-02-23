@@ -50,7 +50,7 @@ def _update_pyproject_toml(**kwargs):
             f.write(f'{k} = "{v}" \n')
 
 
-def assert_zip_file(filename: str, base_path: str | None = None, files: list | None = None):
+def assert_zip_file(filename: str, base_path: str = None, files: list = None):
     zip = zipfile.ZipFile(filename)
     _list = zip.namelist()
     if files is None:
