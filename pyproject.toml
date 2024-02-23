@@ -9,9 +9,15 @@ readme = "README.md"
 python = "^3.8"
 docker = "^7.0.0"
 
+[tool.poetry.group.test.dependencies]
+pytest = "^8.0.1"
+
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.poetry.plugins."poetry.application.plugin"]
 build-lambda = "poetry_plugin_lambda_build.plugin:LambdaPlugin"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
