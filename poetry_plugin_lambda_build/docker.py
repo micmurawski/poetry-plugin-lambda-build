@@ -6,6 +6,22 @@ from functools import cache
 import docker
 from poetry.console.commands.env_command import EnvCommand
 
+LIST_ARGS = (
+    "environment",
+    "dns",
+    "entrypoint"
+)
+
+BOOLEAN_ARGS = (
+    "docker_network_disabled"
+)
+
+
+def _parse_string_to_boolean(value: str):
+    if value.lower() in ("0", "false"):
+        return False
+    return True
+
 
 @cache
 def get_docker_client() -> docker.DockerClient:
@@ -48,11 +64,13 @@ def run_container(env_cmd: EnvCommand, *args, **kwargs):
     options: dict = {k: True for k in kwargs.pop("options", [])}
     kwargs: dict = {k: v for k, v in kwargs.items() if v}
 
-    if "dns" in kwargs:
-        kwargs["dns"] = kwargs["dns"].split(",")
+    for arg in LIST_ARGS:
+        if arg in kwargs:
+            kwargs[arg] = kwargs[arg].split(",")
 
-    if "environment" in kwargs:
-        kwargs["environment"] = kwargs["environment"].split(",")
+    for arg in BOOLEAN_ARGS:
+        if arg in kwargs:
+            kwargs[arg] = _parse_string_to_boolean(kwargs[arg])
 
     docker_container = get_docker_client().containers.run(
         image, **kwargs, **options, tty=True, detach=True
