@@ -4,6 +4,7 @@ The plugin for poetry that allows you to build zip packages suited for serverles
 
 Additionally it provides docker container support for build inside container
 
+[![Test](https://github.com/micmurawski/poetry-plugin-lambda-build/actions/workflows/test.yml/badge.svg)](https://github.com/micmurawski/poetry-plugin-lambda-build/actions/workflows/test.yml)
 
 ## Installation
 

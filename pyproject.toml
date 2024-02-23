@@ -11,6 +11,7 @@ docker = "^7.0.0"
 
 [tool.poetry.group.test.dependencies]
 pytest = "^8.0.1"
+poetry = "^1.7.1"
 
 [build-system]
 requires = ["poetry-core"]
