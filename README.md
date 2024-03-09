@@ -93,6 +93,7 @@ Arguments:
   docker_network             The name of the network this container will be connected to at creation time
   docker_network_disabled    Disable networking ex. docker_network_disabled=0
   docker_network_mode        Network_mode
+  docker_platform            Platform in the format os[/arch[/variant]]. Only used if the method needs to pull the requested image.
   package_install_dir        Installation directory inside zip artifact for single zip package
   layer_install_dir          Installation directory inside zip artifact for layer zip package
   function_install_dir       Installation directory inside zip artifact for function zip package
