@@ -124,17 +124,29 @@ class BuildLambdaCommand(EnvCommand):
         options = defaultdict(dict)
         options.update(DEFAULT_OPTIONS)
         override_options = defaultdict(dict)
+        _missed_args = {}
 
         pyproject_data = self.poetry.pyproject.data
         # Gather override args
         for arg in ARGS:
             arg_name = arg[0]
-            _argument = self.argument(arg_name)
+            _argument = self.argument(arg_name) or _missed_args.get(arg_name)
             if _argument:
+                
+                if arg_name not in _argument:
+                    key = _argument.split("=", 1)[0]
+                    _missed_args[key] = _argument
+                    continue
+
                 try:
                     key, value = _argument.split("=", 1)
-                    prefix, name = key.split("_", 1)
-                    override_options[prefix][name] = value
+                    
+                    if "_" in key:
+                        prefix, name = key.split("_", 1)
+                        override_options[prefix][name] = value
+                    else:
+                        override_options[key] = value
+                    
                 except ValueError as e:
                     raise Exception(
                         f"Argument {arg_name} has wrong value: {_argument}", e
