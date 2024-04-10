@@ -51,13 +51,13 @@ def create_separate_layer_package(
         poetry_export_cmd = "poetry export --format=requirements.txt"
 
         if options["without"]:
-            poetry_export_cmd.append(f"--without={options['without']}")
+            poetry_export_cmd+=f" --without={options['without']}"
 
         if options["with"]:
-            poetry_export_cmd.append(f"--with={options['with']}")
+            poetry_export_cmd+=f" --with={options['with']}"
         
         if options["only"]:
-            poetry_export_cmd.append(f"--only={options['only']}")
+            poetry_export_cmd+=f" --only={options['only']}"
 
         if install_dir:
             layer_output_dir = os.path.join(layer_output_dir, install_dir)
