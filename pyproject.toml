@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "poetry-plugin-lambda-build"
-version = "0.2.2"
+version = "0.2.3"
 description = "The plugin for poetry that allows you to build zip packages suited for serverless deployment like AWS Lambda, Google App Engine, Azure App Service, and more..."
 authors = ["Michał Murawski <mmurawski777@gmail.com>"]
 readme = "README.md"
