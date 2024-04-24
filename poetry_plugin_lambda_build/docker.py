@@ -1,7 +1,6 @@
 import os
 import tarfile
 from contextlib import contextmanager
-from functools import cache
 
 import docker
 from poetry.console.commands.env_command import EnvCommand
@@ -23,7 +22,6 @@ def _parse_string_to_boolean(value: str):
     return True
 
 
-@cache
 def get_docker_client() -> docker.DockerClient:
     return docker.from_env()
 
@@ -59,7 +57,7 @@ def copy_from(src: str, dst: str):
 
 
 @contextmanager
-def run_container(env_cmd: EnvCommand, *args, **kwargs):
+def run_container(env_cmd: EnvCommand, **kwargs):
     image: str = kwargs.pop("image")
     options: dict = {k: True for k in kwargs.pop("options", [])}
     kwargs: dict = {k: v for k, v in kwargs.items() if v}

@@ -1,23 +1,6 @@
-from copy import copy
+def remove_prefix(text: str, prefix: str) -> str:
+    return text[len(prefix):] if text.startswith(prefix) and prefix else text
 
 
-def get_path(
-    obj, path: str, separator: str = ".", getter=lambda obj, attr: obj.get(attr)
-):
-    attrs = path.split(separator)
-    value = obj
-    while True:
-        try:
-            attr = attrs.pop(0)
-            value = getter(value, attr)
-        except IndexError:
-            return value
-
-
-def merge_options(a: dict, b: dict) -> dict:
-    result = copy(a)
-    for k in b:
-        val = b[k]
-        result[k] = merge_options(
-            result[k], val) if isinstance(val, dict) else val
-    return result
+def remove_suffix(text: str, suffix: str) -> str:
+    return text[:-len(suffix)] if text.endswith(suffix) and suffix else text
