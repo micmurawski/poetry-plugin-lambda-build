@@ -81,8 +81,14 @@ PARAMS = [
         {},
         [
             lambda: assert_exists_zip_file("layer.zip", "python"),
-            lambda: assert_exists_zip_file("function.zip", files=[
-                "test_project/handler.py"])
+            lambda: assert_not_exists_zip_file(
+                "layer.zip",
+                files=["python/requirements.txt"]
+            ),
+            lambda: assert_exists_zip_file(
+                "function.zip",
+                files=["test_project/handler.py"]
+            )
         ]
     ),
     (
@@ -94,18 +100,31 @@ PARAMS = [
         {},
         [
             lambda: assert_exists_zip_file("layer.zip", "python"),
-            lambda: assert_exists_zip_file("function.zip", files=[
-                "test_project/handler.py"])
+            lambda: assert_not_exists_zip_file(
+                "layer.zip",
+                files=["python/requirements.txt"]
+            ),
+            lambda: assert_exists_zip_file(
+                "function.zip",
+                files=["test_project/handler.py"]
+            )
         ]
     ),
     (
         {
-            "artifact_path": "function.zip"
+            "artifact_path": "function.zip",
+            "install_dir": "python"
         },
         {},
         [
-            lambda: assert_exists_zip_file("function.zip", files=[
-                "test_project/handler.py"])
+            lambda: assert_exists_zip_file(
+                "function.zip",
+                files=["python/test_project/handler.py"]
+            ),
+            lambda: assert_not_exists_zip_file(
+                "function.zip",
+                files=["python/requirements.txt"]
+            ),
         ]
     ),
     (
@@ -115,20 +134,14 @@ PARAMS = [
         },
         {},
         [
-            lambda: assert_exists_zip_file("function.zip", files=[
-                "test_project/handler.py"]),
-            lambda: assert_not_exists_zip_file("function.zip", files=[
-                "pytest/__init__.py"])
-        ]
-    ),
-    (
-        {},
-        {"config": "http.basic.repo1 __token__ TOKEN"},
-        [
-            lambda: assert_exists_zip_file("package.zip", files=[
-                "test_project/handler.py"]),
-            lambda: assert_not_exists_zip_file("package.zip", files=[
-                "pytest/__init__.py"])
+            lambda: assert_exists_zip_file(
+                "function.zip",
+                files=["test_project/handler.py"]
+            ),
+            lambda: assert_not_exists_zip_file(
+                "function.zip",
+                files=["pytest/__init__.py"]
+            )
         ]
     )
 ]

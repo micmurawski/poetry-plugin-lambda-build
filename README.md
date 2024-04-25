@@ -83,7 +83,7 @@ Description:
   Execute to build lambda lambda artifacts
 
 Usage:
-  build-lambda [options] [--] [<docker_image> [<docker_entrypoint> [<docker_environment> [<docker_dns> [<docker_network> [<docker_network_disabled> [<docker_network_mode> [<package_install_dir> [<layer_install_dir> [<function_install_dir> [<package_artifact_path> [<layer_artifact_path> [<function_artifact_path> [<only> [<without> [<with> [<install_deps_cmd> [<install_no_deps_cmd> [<install_package_cmd>]]]]]]]]]]]]]]]]]]]
+  build-lambda [options] [--] [<docker_image> [<docker_entrypoint> [<docker_environment> [<docker_dns> [<docker_network> [<docker_network_disabled> [<docker_network_mode> [<docker_platform> [<package_install_dir> [<layer_install_dir> [<function_install_dir> [<install_dir> [<package_artifact_path> [<layer_artifact_path> [<function_artifact_path> [<only> [<without> [<with> [<install_deps_cmd> [<install_no_deps_cmd>]]]]]]]]]]]]]]]]]]]]
 
 Arguments:
   docker_image               The image to run
@@ -97,6 +97,7 @@ Arguments:
   package_install_dir        Installation directory inside zip artifact for single zip package
   layer_install_dir          Installation directory inside zip artifact for layer zip package
   function_install_dir       Installation directory inside zip artifact for function zip package
+  install_dir                Installation directory inside zip artifact for zip package (not function layer separation)
   package_artifact_path      Output package path
   layer_artifact_path        Output layer package path
   function_artifact_path     Output function package path
@@ -105,7 +106,6 @@ Arguments:
   with                       The optional dependency groups to include
   install_deps_cmd           Install dependencies command. Executed during installation of dependencies layer, by default: mkdir -p {container_cache_dir} && pip install -q --upgrade pip && pip install -q -t {container_cache_dir} --no-cache-dir -r {requirements}
   install_no_deps_cmd        Install without dependencies command. Executed during installation of function, by default: mkdir -p {package_dir} && poetry run pip install --quiet -t {package_dir} --no-cache-dir --no-deps . --upgrade
-  install_package_cmd        Install package command. Executed during installation of package without function-layer separation, by default: mkdir -p {package_dir} && pip install poetry --quiet --upgrade pip && poetry build --quiet && poetry run pip install --quiet -t {package_dir} --no-cache-dir dist/*.whl --upgrade
 
 Options:
   -h, --help                 Display help for the given command. When no command is given display help for the list command.

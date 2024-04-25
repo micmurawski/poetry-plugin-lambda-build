@@ -21,25 +21,16 @@ INSTALL_NO_DEPS_CMD = (
     " --quiet -t {package_dir} --no-cache-dir --no-deps . --upgrade"
 )
 
-INSTALL_PACKAGE_CMD = (
-    "mkdir -p {package_dir} && "
-    "pip install poetry --quiet --upgrade pip && "
-    "poetry build --quiet && "
-    "poetry run pip install --quiet -t {package_dir} --no-cache-dir dist/*.whl --upgrade"
-)
-
 DEFAULT_PARAMETERS = {
     "docker_entrypoint": "/bin/sh",
     "docker_network": "host",
     "docker_options": [],
     "artifact_path": "package.zip",
-    "install_package_cmd": INSTALL_PACKAGE_CMD,
     "install_no_deps_cmd": INSTALL_NO_DEPS_CMD,
     "install_deps_cmd": INSTALL_DEPS_CMD,
     "without": None,
     "only": None,
     "with": None,
-    "config": [],
 }
 
 
@@ -87,8 +78,6 @@ ARGS = {
     "with": ("The optional dependency groups to include", True, False, None),
     "install_deps_cmd": (f"Install dependencies command. Executed during installation of dependencies layer, by default: {INSTALL_DEPS_CMD}", True, False, None),
     "install_no_deps_cmd": (f"Install without dependencies command. Executed during installation of function, by default: {INSTALL_NO_DEPS_CMD}", True, False, None),
-    "install_package_cmd": (f"Install package command. Executed during installation of package without function-layer separation, by default: {INSTALL_PACKAGE_CMD}", True, False, None),
-    "config": ("Manages configuration settings.", True, True, None)
 }
 
 ARGS_SECTIONS = ("layer", "function", "docker", "artifacts")
