@@ -38,7 +38,7 @@ def _run_process(cmd: str):
         assert True
     elif process.returncode == 1:
         assert False, f"{cmd} resulted with {err.decode('utf-8')}"
-    return out.decode("utf-8")
+    return out.decode()
 
 
 def _update_pyproject_toml(**kwargs):
@@ -130,6 +130,25 @@ PARAMS = [
     (
         {
             "artifact_path": "function.zip",
+            "install_dir": "python"
+        },
+        {
+            "docker_image": "public.ecr.aws/sam/build-python3.11:latest-x86_64",
+        },
+        [
+            lambda: assert_exists_zip_file(
+                "function.zip",
+                files=["python/test_project/handler.py"]
+            ),
+            lambda: assert_not_exists_zip_file(
+                "function.zip",
+                files=["python/requirements.txt"]
+            ),
+        ]
+    ),
+    (
+        {
+            "artifact_path": "function.zip",
             "without": "test"
         },
         {},
@@ -148,7 +167,7 @@ PARAMS = [
 
 
 @pytest.mark.parametrize("config,args,assert_files", PARAMS)
-def test_build_in_container(config: dict, args: dict, assert_files: list, vars, tmp_path: Path, ):
+def test_build_in_container(config: dict, args: dict, assert_files: list, vars, tmp_path: Path):
     with cd(tmp_path):
         handler_file = "test_project/handler.py"
         _run_process("poetry new test-project")
@@ -162,6 +181,6 @@ def test_build_in_container(config: dict, args: dict, assert_files: list, vars, 
                     **config
                 )
             arguments = " ".join(f'{k}="{v}"' for k, v in args.items())
-            _run_process(f"{vars} poetry build-lambda {arguments} -vvv")
+            _run_process(f'{vars} poetry build-lambda {arguments} -vvv')
             for files_assertion in assert_files:
                 files_assertion()

@@ -28,12 +28,12 @@ def _run_process(self: EnvCommand, cmd: str) -> ByteString:
     )
     output, err = process.communicate()
     if process.returncode == 0:
-        self.line_error(err.decode("utf-8"), style="warning")
-        return output
+        self.line_error(err.decode(), style="warning")
+        return output.decode()
     elif process.returncode == 1:
-        self.line_error(err.decode("utf-8"), style="error")
+        self.line_error(err.decode(), style="error")
 
-    raise BuildLambdaPluginError(output.decode("utf-8"))
+    raise BuildLambdaPluginError(output.decode())
 
 
 def _parse_poetry_export_cmd(parameters: dict) -> str:
@@ -67,7 +67,7 @@ def create_separate_layer_package(
         output = _run_process(self, poetry_export_cmd)
 
         with open(requirements_path, "w") as f:
-            f.write(output.decode("utf-8"))
+            f.write(output)
 
         if in_container:
             with run_container(self, **parameters.get_section("docker")) as container:
@@ -80,7 +80,7 @@ def create_separate_layer_package(
                 result = container.exec_run(
                     f'sh -c "{install_deps_cmd}"', stream=True)
                 for line in result.output:
-                    self.line(line.strip().decode("utf-8"), style="info")
+                    self.line(line.strip().decode(), style="info")
                 self.line(f"Coping output to {layer_output_dir}", style="info")
                 os.makedirs(layer_output_dir, exist_ok=True)
                 copy_from(f"{container.id}:{CONTAINER_CACHE_DIR}/.",
@@ -132,13 +132,12 @@ def create_separated_function_package(self: EnvCommand, parameters: dict):
 
 
 def create_package(self: EnvCommand, parameters: dict, in_container: bool = True):
-    current_working_directory = os.getcwd()
     with TemporaryDirectory() as package_dir:
         install_dir = parameters.get("install_dir", "")
         package_dir = os.path.join(package_dir, install_dir)
         os.makedirs(package_dir, exist_ok=True)
         target = os.path.join(
-            current_working_directory, parameters.get("artifact_path", "")
+            CURRENT_WORK_DIR, parameters.get("artifact_path", "")
         )
         requirements_path = os.path.join(package_dir, "requirements.txt")
         poetry_export_cmd = _parse_poetry_export_cmd(parameters)
@@ -147,19 +146,18 @@ def create_package(self: EnvCommand, parameters: dict, in_container: bool = True
         output = _run_process(self, poetry_export_cmd)
 
         with open(requirements_path, "w") as f:
-            f.write(output.decode())
+            f.write(output)
 
         if in_container:
             with run_container(self, **parameters.get_section("docker")) as container:
-                copy_to(
-                    src=requirements_path,
-                    dst=f"{container.id}:/requirements.txt"
-                )
+                copy_to(requirements_path, f"{container.id}:/requirements.txt")
                 self.line("Installing requirements", style="info")
                 install_deps_cmd = parameters["install_deps_cmd"].format(
                     container_cache_dir=CONTAINER_CACHE_DIR,
                     requirements="/requirements.txt",
                 )
+                self.line(f"Executing: {install_deps_cmd}", style="debug")
+
                 result = container.exec_run(
                     f'sh -c "{install_deps_cmd}"', stream=True
                 )
@@ -182,10 +180,9 @@ def create_package(self: EnvCommand, parameters: dict, in_container: bool = True
         install_cmd = parameters["install_no_deps_cmd"].format(
             package_dir=package_dir)
 
+        os.chdir(CURRENT_WORK_DIR)
         self.line(f"Executing: {install_cmd}", style="debug")
-
         _run_process(self, install_cmd)
-
         os.makedirs(os.path.dirname(target), exist_ok=True)
         create_zip_package(
             dir=remove_suffix(package_dir, install_dir),
