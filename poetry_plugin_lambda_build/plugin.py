@@ -1,4 +1,5 @@
 import enum
+import platform
 from typing import Any
 
 from cleo.application import Application
@@ -10,14 +11,16 @@ from .recipes import (create_package, create_separate_layer_package,
                       create_separated_function_package)
 from .utils import remove_prefix
 
+mkdir: str =  "mkdir -p" if platform.system() == 'Windows' else "mkdir"
+
 INSTALL_DEPS_CMD = (
-    "mkdir -p {container_cache_dir} && "
+    "{mkdir} {container_cache_dir} && "
     "pip install -q --upgrade pip && "
     "pip install -q -t {container_cache_dir} --no-cache-dir -r {requirements}"
 )
 
 INSTALL_NO_DEPS_CMD = (
-    "mkdir -p {package_dir} && poetry run pip install"
+    "{mkdir} {package_dir} && poetry run pip install"
     " --quiet -t {package_dir} --no-cache-dir --no-deps . --upgrade"
 )
 
