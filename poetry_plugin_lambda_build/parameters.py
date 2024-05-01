@@ -77,12 +77,12 @@ ARGS = {
     "zip_compression": (f"ZIP_STORED (no compression), ZIP_DEFLATED (requires zlib), ZIP_BZIP2 (requires bz2) or ZIP_LZMA (requires lzma)", True, False, None, str),
 
 
-    "build_and_install_cmd_tmpl":  (f"Template of the command executed during building package in container is executed (function and deps in the same package, in container), by default: {BUILD_N_INSTALL_CMD_TMPL}", True, False, None, str),
-    "install_whl_cmd_tmpl": (f"Template of the command executed for local package builds (function and deps in the same package, no container), by default: {INSTALL_WHL_NO_DEPS_CMD_TMPL}", True, False, None, str),
-    "build_and_install_no_deps_cmd_tmpl": (f"Template of the command executed during building function package in container is executed (function and deps in separate packages, in container), by default: {BUILD_N_INSTALL_CMD_TMPL}", True, False, None, str),
-    "install_whl_no_deps_cmd_tmpl": (f"Template of the command executed after whl build for creation of function package on local machine (function and deps in separate packages, no container), by default: {INSTALL_WHL_NO_DEPS_CMD_TMPL}", True, False, None, str),
-    "install_deps_cmd_tmpl":  (f"Template of the command executed during installing layer dependencies (all builds with layer), by default: {INSTALL_DEPS_CMD_TMPL}", True, False, None, str),
-    "build_cmd_tmpl":  (f"Template of the command executed during building package (functions and deps built on local), by default: {BUILD_PACKAGE_CMD}", True, False, None, str),
+    "build_and_install_cmd_tmpl":  (f"The template of a command executed during building artifact package in container is executed (function and deps in the same package, in container), by default: {BUILD_N_INSTALL_CMD_TMPL}", True, False, None, str),
+    "install_whl_cmd_tmpl": (f"The template of a command executed for local artifact package builds (function and deps in the same package, no container), by default: {INSTALL_WHL_NO_DEPS_CMD_TMPL}", True, False, None, str),
+    "build_and_install_no_deps_cmd_tmpl": (f"The template of a command executed during building function package in container is executed (function and deps in separate packages, in container), by default: {BUILD_N_INSTALL_CMD_TMPL}", True, False, None, str),
+    "install_whl_no_deps_cmd_tmpl": (f"The template of a command executed after whl build for creation of function package on local machine (function and deps in separate packages, no container), by default: {INSTALL_WHL_NO_DEPS_CMD_TMPL}", True, False, None, str),
+    "install_deps_cmd_tmpl":  (f"The template of a command executed during installing layer dependencies (all builds with layer), by default: {INSTALL_DEPS_CMD_TMPL}", True, False, None, str),
+    "build_cmd_tmpl":  (f"The template of a command executed during building package (functions and deps built on local), by default: {BUILD_PACKAGE_CMD}", True, False, None, str),
 }
 
 
