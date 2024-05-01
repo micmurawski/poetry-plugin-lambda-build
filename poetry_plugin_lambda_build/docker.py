@@ -1,25 +1,34 @@
+from __future__ import annotations
+
 import os
 import tarfile
 from contextlib import contextmanager
+from tempfile import TemporaryDirectory
+from typing import Generator
 
 import docker
-from poetry.console.commands.env_command import EnvCommand
+from docker.models.containers import Container
+from poetry.console.commands.command import Command
 
-LIST_ARGS = (
-    "environment",
-    "dns",
-    "entrypoint"
-)
-
-BOOLEAN_ARGS = (
-    "docker_network_disabled"
-)
+from .utils import cd
 
 
-def _parse_string_to_boolean(value: str):
+def _parse_str_to_bool(value: str) -> bool:
     if value.lower() in ("0", "false"):
         return False
     return True
+
+
+def _parse_str_to_list(value: str) -> list[str]:
+    return value.split(",")
+
+
+ARGS_PARSERS = {
+    "environment": _parse_str_to_list,
+    "dns": _parse_str_to_list,
+    "entrypoint": _parse_str_to_list,
+    "docker_network_disabled": _parse_str_to_bool
+}
 
 
 def get_docker_client() -> docker.DockerClient:
@@ -30,16 +39,19 @@ def copy_to(src: str, dst: str):
     name, dst = dst.split(":")
     container = get_docker_client().containers.get(name)
 
-    os.chdir(os.path.dirname(src))
-    src_name = os.path.basename(src)
-    tar = tarfile.open(src + ".tar", mode="w")
-    try:
-        tar.add(src_name)
-    finally:
-        tar.close()
+    with TemporaryDirectory() as tmp_dir:
+        src_name = os.path.basename(src)
+        tar_filename = src_name + ".tar"
+        tar_path = os.path.join(tmp_dir, tar_filename)
+        tar = tarfile.open(tar_path, mode="w")
+        with cd(os.path.dirname(src)):
+            try:
+                tar.add(src_name)
+            finally:
+                tar.close()
 
-    data = open(src + ".tar", "rb").read()
-    container.put_archive(os.path.dirname(dst), data)
+            data = open(tar_path, "rb").read()
+            container.put_archive(os.path.dirname(dst), data)
 
 
 def copy_from(src: str, dst: str):
@@ -57,27 +69,35 @@ def copy_from(src: str, dst: str):
 
 
 @contextmanager
-def run_container(env_cmd: EnvCommand, **kwargs):
+def run_container(cmd: Command, **kwargs) -> Generator[Container, None, None]:
     image: str = kwargs.pop("image")
     options: dict = {k: True for k in kwargs.pop("options", [])}
     kwargs: dict = {k: v for k, v in kwargs.items() if v}
 
-    for arg in LIST_ARGS:
+    for arg in ARGS_PARSERS:
         if arg in kwargs:
-            kwargs[arg] = kwargs[arg].split(",")
+            parser = ARGS_PARSERS[arg]
+            kwargs[arg] = parser(kwargs[arg])
 
-    for arg in BOOLEAN_ARGS:
-        if arg in kwargs:
-            kwargs[arg] = _parse_string_to_boolean(kwargs[arg])
-
-    docker_container = get_docker_client().containers.run(
+    docker_container: Container = get_docker_client().containers.run(
         image, **kwargs, **options, tty=True, detach=True
     )
-    env_cmd.line(f"Running docker container image: {image}", style="debug")
+    cmd.line(f"Running docker container image: {image}", style="debug")
     try:
         yield docker_container
     finally:
-        env_cmd.line("Killing docker container...", style="debug")
+        cmd.line("Killing docker container...", style="debug")
         docker_container.kill()
-        env_cmd.line("Removing docker container...", style="debug")
+        cmd.line("Removing docker container...", style="debug")
         docker_container.remove(v=True)
+
+
+def exec_run_container(cmd: Command, container: Container, entrypoint: str, container_cmd: str):
+    _, stream = container.exec_run(
+        f'{entrypoint} -c "{container_cmd}"',
+        stdout=True,
+        stderr=True,
+        stream=True
+    )
+    for line in stream:
+        cmd.line(line.strip().decode(), style="info")

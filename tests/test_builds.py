@@ -1,18 +1,24 @@
 import contextlib
 import os
 import platform
-import subprocess
 import zipfile
 from pathlib import Path
 
 import pytest
 
+from poetry_plugin_lambda_build.utils import run_python_cmd
 
-@pytest.fixture(scope="session")
-def vars():
+
+def run_poetry_cmd(cmd: str, **kwargs) -> int:
+    return run_python_cmd("-m", "poetry", *cmd.split(" "), **kwargs)
+
+
+@pytest.fixture(scope="session", autouse=True)
+def env_vars():
     if platform.system() == "Darwin":
-        return 'export DOCKER_HOST="unix:///Users/$USER/.docker/run/docker.sock" &&'
-    return ""
+        user = os.environ["USER"]
+        os.environ["DOCKER_HOST"] = f"unix:///Users/{user}/.docker/run/docker.sock"
+    yield
 
 
 @contextlib.contextmanager
@@ -23,22 +29,6 @@ def cd(path):
         yield
     finally:
         os.chdir(old_path)
-
-
-def _run_process(cmd: str):
-    process = subprocess.Popen(
-        cmd,
-        shell=True,
-        stdin=None,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-    )
-    out, err = process.communicate()
-    if process.returncode == 0:
-        assert True
-    elif process.returncode == 1:
-        assert False, f"{cmd} resulted with {err.decode('utf-8')}"
-    return out.decode()
 
 
 def _update_pyproject_toml(**kwargs):
@@ -70,10 +60,12 @@ def assert_not_exists_zip_file(filename: str, base_path: str = None, files: list
         assert file not in _list, f"{file} exists in zip package"
 
 
+DOCKER_IMG = "public.ecr.aws/sam/build-python3.11:latest-x86_64"
+
 PARAMS = [
     (
         {
-            "docker_image": "public.ecr.aws/sam/build-python3.11:latest-x86_64",
+            "docker_image": DOCKER_IMG,
             "layer_install_dir": "python",
             "layer_artifact_path": "layer.zip",
             "function_artifact_path": "function.zip"
@@ -112,7 +104,7 @@ PARAMS = [
     ),
     (
         {
-            "artifact_path": "function.zip",
+            "package_artifact_path": "function.zip",
             "install_dir": "python"
         },
         {},
@@ -129,11 +121,11 @@ PARAMS = [
     ),
     (
         {
-            "artifact_path": "function.zip",
+            "package_artifact_path": "function.zip",
             "install_dir": "python"
         },
         {
-            "docker_image": "public.ecr.aws/sam/build-python3.11:latest-x86_64",
+            "docker_image": DOCKER_IMG,
         },
         [
             lambda: assert_exists_zip_file(
@@ -148,7 +140,7 @@ PARAMS = [
     ),
     (
         {
-            "artifact_path": "function.zip",
+            "package_artifact_path": "function.zip",
             "without": "test"
         },
         {},
@@ -159,7 +151,7 @@ PARAMS = [
             ),
             lambda: assert_not_exists_zip_file(
                 "function.zip",
-                files=["pytest/__init__.py"]
+                files=["pytest/__init__.py", "*requirements*"]
             )
         ]
     )
@@ -167,20 +159,20 @@ PARAMS = [
 
 
 @pytest.mark.parametrize("config,args,assert_files", PARAMS)
-def test_build_in_container(config: dict, args: dict, assert_files: list, vars, tmp_path: Path):
+def test_build_in_container(config: dict, args: dict, assert_files: list, tmp_path: Path):
     with cd(tmp_path):
         handler_file = "test_project/handler.py"
-        _run_process("poetry new test-project")
+        assert run_poetry_cmd("new test-project") == 0
         with cd(tmp_path / "test-project"):
-            _run_process("poetry add requests")
-            _run_process("poetry add pytest --group=test")
-            _run_process("poetry self add poetry-plugin-export")
+            assert run_poetry_cmd("add requests") == 0
+            assert run_poetry_cmd("add pytest --group=test") == 0
+            assert run_poetry_cmd("self add poetry-plugin-export") == 0
             open(handler_file, "w").close()
             if config:
                 _update_pyproject_toml(
                     **config
                 )
-            arguments = " ".join(f'{k}="{v}"' for k, v in args.items())
-            _run_process(f'{vars} poetry build-lambda {arguments} -vvv')
+            arguments = " ".join(f'{k}={v}' for k, v in args.items())
+            assert run_poetry_cmd(f"build-lambda {arguments} -v") == 0
             for files_assertion in assert_files:
                 files_assertion()

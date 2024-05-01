@@ -1,12 +1,13 @@
+import enum
 import os
-import subprocess
 from tempfile import TemporaryDirectory
-from typing import ByteString
 
-from poetry.console.commands.env_command import EnvCommand
+from poetry.console.commands.command import Command
 
-from .docker import copy_from, copy_to, run_container
-from .utils import remove_suffix
+from .docker import copy_from, copy_to, exec_run_container, run_container
+from .parameters import ParametersContainer
+from .requirements import RequirementsExporter
+from .utils import format_str, mask_string, remove_suffix, run_python_cmd
 from .zip import create_zip_package
 
 
@@ -14,179 +15,266 @@ class BuildLambdaPluginError(Exception):
     pass
 
 
+class BuildType(enum.Enum):
+    IN_CONTAINER_MERGED = enum.auto()
+    IN_CONTAINER_SEPARATED = enum.auto()
+    MERGED = enum.auto()
+    SEPARATED = enum.auto()
+
+    @classmethod
+    def get_type(cls, parameters: dict):
+        layer = parameters.get("layer_artifact_path")
+        function = parameters.get("function_artifact_path")
+        container_img = parameters.get("docker_image")
+        if container_img:
+            if layer and function:
+                return cls.IN_CONTAINER_SEPARATED
+            else:
+                return cls.IN_CONTAINER_MERGED
+        else:
+            if layer and function:
+                return cls.SEPARATED
+            else:
+                return cls.MERGED
+
+
 CONTAINER_CACHE_DIR = "/opt/lambda/cache"
 CURRENT_WORK_DIR = os.getcwd()
 
 
-def _run_process(self: EnvCommand, cmd: str) -> ByteString:
-    process = subprocess.Popen(
-        cmd,
-        shell=True,
-        stdin=None,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-    )
-    output, err = process.communicate()
-    if process.returncode == 0:
-        self.line_error(err.decode(), style="warning")
-        return output.decode()
-    elif process.returncode == 1:
-        self.line_error(err.decode(), style="error")
-
-    raise BuildLambdaPluginError(output.decode())
+def get_requirements(self: Command, parameters: ParametersContainer) -> str:
+    return RequirementsExporter(
+        poetry=self.poetry,
+        io=self.io,
+        groups=parameters.groups
+    ).export()
 
 
-def _parse_poetry_export_cmd(parameters: dict) -> str:
-    poetry_export_cmd = "poetry export --format=requirements.txt --with-credentials"
-    if parameters["without"]:
-        poetry_export_cmd += f" --without={parameters['without']}"
-    if parameters["with"]:
-        poetry_export_cmd += f" --with={parameters['with']}"
-    if parameters["only"]:
-        poetry_export_cmd += f" --only={parameters['only']}"
-    return poetry_export_cmd
+def get_indexes(self: Command, parameters: ParametersContainer) -> str:
+    return RequirementsExporter(
+        poetry=self.poetry,
+        io=self.io,
+        groups=parameters.groups
+    ).export_indexes()
 
 
-def create_separate_layer_package(
-    self: EnvCommand, parameters: dict, in_container: bool = True
-):
-    with TemporaryDirectory() as tmp_dir:
-        install_dir = parameters.get("layer_install_dir", "")
-        layer_output_dir = os.path.join(tmp_dir, "layer_output")
-
-        target = os.path.join(
-            CURRENT_WORK_DIR, parameters.get("layer_artifact_path", "")
-        )
-        requirements_path = os.path.join(tmp_dir, "requirements.txt")
-        poetry_export_cmd = _parse_poetry_export_cmd(parameters)
-        layer_output_dir = os.path.join(layer_output_dir, install_dir)
-
-        self.line("Generating requirements file...", style="info")
-        self.line(f"Executing: {poetry_export_cmd}", style="debug")
-
-        output = _run_process(self, poetry_export_cmd)
-
-        with open(requirements_path, "w") as f:
-            f.write(output)
-
-        if in_container:
-            with run_container(self, **parameters.get_section("docker")) as container:
-                copy_to(requirements_path, f"{container.id}:/requirements.txt")
-                self.line("Installing requirements", style="info")
-                install_deps_cmd = parameters["install_deps_cmd"].format(
-                    container_cache_dir=CONTAINER_CACHE_DIR,
-                    requirements="/requirements.txt",
-                )
-                result = container.exec_run(
-                    f'sh -c "{install_deps_cmd}"', stream=True)
-                for line in result.output:
-                    self.line(line.strip().decode(), style="info")
-                self.line(f"Coping output to {layer_output_dir}", style="info")
-                os.makedirs(layer_output_dir, exist_ok=True)
-                copy_from(f"{container.id}:{CONTAINER_CACHE_DIR}/.",
-                          layer_output_dir)
+class Builder:
+    def __init__(self, cmd: Command, parameters: ParametersContainer) -> None:
+        self.cmd = cmd
+        self.parameters = parameters
+        self._type: BuildType = BuildType.get_type(parameters)
+        if self._type in (BuildType.IN_CONTAINER_SEPARATED, BuildType.IN_CONTAINER_MERGED):
+            self.in_container = True
         else:
-            install_deps_cmd = parameters["install_deps_cmd"].format(
-                container_cache_dir=layer_output_dir, requirements=requirements_path
+            self.in_container = False
+
+    def format_str(self, string: str, **kwargs) -> tuple[str, str]:
+        return format_str(
+            string,
+            package_name=self.cmd.poetry.package.name,
+            indexes=get_indexes(self.cmd, self.parameters),
+            **kwargs
+        ), format_str(
+            string,
+            package_name=self.cmd.poetry.package.name,
+            indexes=mask_string(get_indexes(self.cmd, self.parameters)),
+            **kwargs
+        )
+
+    def create_separate_layer_package(self):
+        self.cmd.line("Building separate layer package...", style="info")
+        with TemporaryDirectory() as tmp_dir:
+            install_dir = self.parameters.get("layer_install_dir", "")
+            layer_output_dir = os.path.join(tmp_dir, "layer_output")
+            target = os.path.join(
+                CURRENT_WORK_DIR, self.parameters.get(
+                    "layer_artifact_path", "")
+            )
+            requirements_path = os.path.join(tmp_dir, "requirements.txt")
+            layer_output_dir = os.path.join(layer_output_dir, install_dir)
+            os.makedirs(layer_output_dir, exist_ok=True)
+
+            self.cmd.line("Generating requirements file...", style="info")
+
+            with open(requirements_path, "w") as f:
+                f.write(get_requirements(self.cmd, self.parameters))
+
+            if self.in_container:
+                self.cmd.line("Running docker container...", style="info")
+                with run_container(self.cmd, **self.parameters.get_section("docker")) as container:
+                    copy_to(
+                        src=requirements_path,
+                        dst=f"{container.id}:/requirements.txt"
+                    )
+                    self.cmd.line("Installing requirements", style="info")
+                    cmd, print_safe_cmd = self.format_str(
+                        self.parameters["install_deps_cmd_tmpl"],
+                        output_dir=CONTAINER_CACHE_DIR,
+                        requirements="/requirements.txt",
+                    )
+                    self.cmd.line(
+                        f"Executing: {print_safe_cmd}", style="debug")
+                    exec_run_container(
+                        cmd=self.cmd,
+                        container=container,
+                        entrypoint=self.parameters["docker_entrypoint"],
+                        container_cmd=cmd,
+                    )
+                    self.cmd.line(
+                        f"Coping output to {layer_output_dir}", style="info")
+                    copy_from(
+                        src=f"{container.id}:{CONTAINER_CACHE_DIR}/.",
+                        dst=layer_output_dir
+                    )
+            else:
+                self.cmd.line("Installing requirements", style="info")
+                cmd, print_safe_cmd = self.format_str(
+                    self.parameters["install_deps_cmd_tmpl"],
+                    output_dir=layer_output_dir,
+                    requirements=requirements_path,
+                )
+                self.cmd.line(f"Executing: {print_safe_cmd}", style="info")
+                run_python_cmd("-m", *cmd.split(" "))
+
+            self.cmd.line(f"Building {target}...", style="info")
+            os.makedirs(os.path.dirname(target), exist_ok=True)
+            create_zip_package(
+                dir=remove_suffix(layer_output_dir, install_dir),
+                output=target,
+                exclude=[requirements_path],
+                **self.parameters.get_section("zip")
+            )
+            self.cmd.line(
+                f"target successfully built: {target}...", style="info")
+
+    def create_separated_function_package(self):
+        self.cmd.line("Building function package...", style="info")
+        with TemporaryDirectory() as tmp_dir:
+            install_dir = self.parameters.get("function_install_dir", "")
+            package_dir = tmp_dir
+            target = os.path.join(
+                CURRENT_WORK_DIR, self.parameters.get(
+                    "function_artifact_path", "")
             )
 
-            self.line("Installing requirements", style="info")
-            self.line(f"Executing: {install_deps_cmd}", style="debug")
-            _run_process(self, install_deps_cmd)
+            package_dir = os.path.join(package_dir, install_dir)
+            if self.in_container:
+                with run_container(self.cmd, **self.parameters.get_section("docker"), working_dir="/") as container:
+                    copy_to(
+                        src=f"{CURRENT_WORK_DIR}/.",
+                        dst=f"{container.id}:/"
+                    )
 
-        self.line(f"Building {target}...", style="info")
-        os.makedirs(os.path.dirname(target), exist_ok=True)
-        create_zip_package(
-            dir=remove_suffix(layer_output_dir, install_dir),
-            output=target,
-            exclude=["*.pyc", "*__pycache__/*", requirements_path]
-        )
-        self.line(f"target successfully built: {target}...", style="info")
+                    cmd, print_safe_cmd = self.format_str(
+                        self.parameters["build_and_install_no_deps_cmd_tmpl"],
+                        output_dir=CONTAINER_CACHE_DIR
+                    )
 
-
-def create_separated_function_package(self: EnvCommand, parameters: dict):
-    with TemporaryDirectory() as tmp_dir:
-        install_dir = parameters.get("function_install_dir", "")
-        package_dir = tmp_dir
-        target = os.path.join(
-            CURRENT_WORK_DIR, parameters.get("function_artifact_path", "")
-        )
-
-        package_dir = os.path.join(package_dir, install_dir)
-        self.line("Building function package...", style="info")
-
-        install_cmd = parameters["install_no_deps_cmd"].format(
-            package_dir=package_dir)
-
-        self.line(f"Executing: {install_cmd}", style="debug")
-
-        _run_process(self, install_cmd)
-
-        self.line(f"Building target: {target}", style="info")
-        os.makedirs(os.path.dirname(target), exist_ok=True)
-        create_zip_package(
-            dir=remove_suffix(package_dir, install_dir),
-            output=target,
-        )
-        self.line(f"target successfully built: {target}...", style="info")
-
-
-def create_package(self: EnvCommand, parameters: dict, in_container: bool = True):
-    with TemporaryDirectory() as package_dir:
-        install_dir = parameters.get("install_dir", "")
-        package_dir = os.path.join(package_dir, install_dir)
-        os.makedirs(package_dir, exist_ok=True)
-        target = os.path.join(
-            CURRENT_WORK_DIR, parameters.get("artifact_path", "")
-        )
-        requirements_path = os.path.join(package_dir, "requirements.txt")
-        poetry_export_cmd = _parse_poetry_export_cmd(parameters)
-        self.line("Generating requirements file...", style="info")
-        self.line(f"Executing: {poetry_export_cmd}", style="debug")
-        output = _run_process(self, poetry_export_cmd)
-
-        with open(requirements_path, "w") as f:
-            f.write(output)
-
-        if in_container:
-            with run_container(self, **parameters.get_section("docker")) as container:
-                copy_to(requirements_path, f"{container.id}:/requirements.txt")
-                self.line("Installing requirements", style="info")
-                install_deps_cmd = parameters["install_deps_cmd"].format(
-                    container_cache_dir=CONTAINER_CACHE_DIR,
-                    requirements="/requirements.txt",
+                    self.cmd.line(
+                        f"Executing: {print_safe_cmd}", style="info")
+                    exec_run_container(
+                        self.cmd, container, self.parameters["docker_entrypoint"], cmd)
+                    copy_from(
+                        src=f"{container.id}:{CONTAINER_CACHE_DIR}/.",
+                        dst=package_dir
+                    )
+            else:
+                cmd, print_safe_cmd = self.format_str(
+                    self.parameters["build_cmd_tmpl"]
                 )
-                self.line(f"Executing: {install_deps_cmd}", style="debug")
+                os.makedirs(package_dir, exist_ok=True)
+                self.cmd.line(f"Executing: {print_safe_cmd}", style="debug")
+                run_python_cmd("-m", *cmd.split(" "), cmd=self)
+                cmd, print_safe_cmd = self.format_str(
+                    self.parameters["build_cmd_tmpl"]
+                )
+                cmd, print_safe_cmd = self.format_str(
+                    self.parameters["install_whl_no_deps_cmd_tmpl"],
+                    output_dir=package_dir,
+                )
+                self.cmd.line(f"Executing: {print_safe_cmd}", style="debug")
+                run_python_cmd("-m", *cmd.split(" "), cmd=self)
 
-                result = container.exec_run(
-                    f'sh -c "{install_deps_cmd}"', stream=True
-                )
-                for line in result.output:
-                    self.line(line.strip().decode(), style="info")
-                self.line(f"Coping output to {package_dir}", style="info")
-                copy_from(
-                    src=f"{container.id}:{CONTAINER_CACHE_DIR}/.",
-                    dst=package_dir
-                )
-        else:
-            install_deps_cmd = parameters["install_deps_cmd"].format(
-                container_cache_dir=package_dir,
-                requirements=requirements_path
+            self.cmd.line(f"Building target: {target}", style="info")
+            os.makedirs(os.path.dirname(target), exist_ok=True)
+            create_zip_package(
+                dir=remove_suffix(package_dir, install_dir),
+                output=target,
+                exclude=[],
+                **self.parameters.get_section("zip")
             )
-            self.line("Building package on local", style="info")
-            self.line(f"Executing: {install_deps_cmd}", style="debug")
-            _run_process(self, install_deps_cmd)
+            self.cmd.line(
+                f"Target successfully built: {target}...", style="info")
 
-        install_cmd = parameters["install_no_deps_cmd"].format(
-            package_dir=package_dir)
+    def create_package(self):
+        self.cmd.line("Building package...", style="info")
+        with TemporaryDirectory() as package_dir:
+            install_dir = self.parameters.get("install_dir", "")
+            package_dir = os.path.join(package_dir, install_dir)
+            os.makedirs(package_dir, exist_ok=True)
+            target = os.path.join(
+                CURRENT_WORK_DIR, self.parameters.get(
+                    "package_artifact_path", "")
+            )
 
-        os.chdir(CURRENT_WORK_DIR)
-        self.line(f"Executing: {install_cmd}", style="debug")
-        _run_process(self, install_cmd)
-        os.makedirs(os.path.dirname(target), exist_ok=True)
-        create_zip_package(
-            dir=remove_suffix(package_dir, install_dir),
-            output=target,
-            exclude=["*.pyc", "*__pycache__/*", requirements_path]
-        )
-        self.line(f"target successfully built: {target}...", style="info")
+            if self.in_container:
+                self.cmd.line("Running container...", style="info")
+                with run_container(self.cmd, **self.parameters.get_section("docker"), working_dir="/") as container:
+                    self.cmd.line("Coping content", style="info")
+                    copy_to(f"{CURRENT_WORK_DIR}/.", f"{container.id}:/")
+
+                    build_n_install_cmd_tmpl = self.parameters["build_and_install_cmd_tmpl"]
+                    cmd, print_safe_cmd = self.format_str(
+                        build_n_install_cmd_tmpl,
+                        output_dir=CONTAINER_CACHE_DIR,
+                    )
+
+                    self.cmd.line(
+                        f"Executing: {print_safe_cmd}",
+                        style="debug"
+                    )
+
+                    exec_run_container(
+                        cmd=self.cmd,
+                        container=container,
+                        entrypoint=self.parameters["docker_entrypoint"],
+                        container_cmd=cmd
+                    )
+                    copy_from(
+                        src=f"{container.id}:{CONTAINER_CACHE_DIR}/.",
+                        dst=package_dir
+                    )
+            else:
+                self.cmd.line("Building package on local", style="info")
+                cmd, print_safe_cmd = self.format_str(
+                    self.parameters["build_cmd_tmpl"]
+                )
+                self.cmd.line(f"Executing: {print_safe_cmd}", style="debug")
+                run_python_cmd("-m", *cmd.split(" "), cmd=self.cmd)
+                cmd, print_safe_cmd = self.format_str(
+                    self.parameters["install_whl_cmd_tmpl"],
+                    output_dir=package_dir
+                )
+                self.cmd.line(
+                    f"Executing: {print_safe_cmd}", style="debug")
+                run_python_cmd("-m", *cmd.split(" "), cmd=self.cmd)
+
+            os.makedirs(os.path.dirname(target), exist_ok=True)
+            create_zip_package(
+                dir=remove_suffix(package_dir, install_dir),
+                output=target,
+                exclude=[],
+                **self.parameters.get_section("zip")
+            )
+            self.cmd.line(
+                f"target successfully built: {target}...", style="info")
+
+    def build(self):
+        if self._type in (BuildType.IN_CONTAINER_SEPARATED, BuildType.SEPARATED):
+            self.cmd.line("Building separated packages...", style="info")
+            self.create_separated_function_package()
+            self.create_separate_layer_package()
+        elif self._type == BuildType.IN_CONTAINER_MERGED:
+            self.create_package()
+        else:
+            self.create_package()
