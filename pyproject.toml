@@ -12,6 +12,7 @@ docker = "^7.0.0"
 [tool.poetry.group.test.dependencies]
 pytest = "^8.0.1"
 poetry = "^1.7.1"
+pytest-cov = "^5.0.0"
 
 [build-system]
 requires = ["poetry-core"]
@@ -22,3 +23,17 @@ build-lambda = "poetry_plugin_lambda_build.plugin:LambdaPlugin"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+addopts = [
+    "--cov=poetry_plugin_lambda_build",
+    "--cov-report=term-missing",
+    "--cov-report=html",
+]
+
+[tool.coverage.run]
+source = ["poetry_plugin_lambda_build"]
+command_line = "-m pytest"
+
+[tool.coverage.report]
+include = ["poetry_plugin_lambda_build/*.py"]
+omit = ["*__init__.py"]
+show_missing = true
