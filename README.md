@@ -105,12 +105,6 @@ Arguments:
   with                                The optional dependency groups to include
   zip_compresslevel                   None (default for the given compression type) or an integerspecifying the level to pass to the compressor.When using ZIP_STORED or ZIP_LZMA this keyword has no effect.When using ZIP_DEFLATED integers 0 through 9 are accepted.When using ZIP_BZIP2 integers 1 through 9 are accepted.
   zip_compression                     ZIP_STORED (no compression), ZIP_DEFLATED (requires zlib), ZIP_BZIP2 (requires bz2) or ZIP_LZMA (requires lzma)
-  build_and_install_cmd_tmpl          The template of a command executed during building artifact package in container is executed (function and deps in the same package, in container), by default: pip install poetry --quiet --upgrade pip && poetry build -q && mkdir -p {output_dir} && poetry run pip install -q -t {output_dir} --find-links=dist {package_name} --no-cache-dir --upgrade
-  install_whl_cmd_tmpl                The template of a command executed for local artifact package builds (function and deps in the same package, no container), by default: poetry run pip install -q -t {output_dir} --find-links=dist {package_name} --no-cache-dir --no-deps --upgrade
-  build_and_install_no_deps_cmd_tmpl  The template of a command executed during building function package in container is executed (function and deps in separate packages, in container), by default: pip install poetry --quiet --upgrade pip && poetry build -q && mkdir -p {output_dir} && poetry run pip install -q -t {output_dir} --find-links=dist {package_name} --no-cache-dir --upgrade
-  install_whl_no_deps_cmd_tmpl        The template of a command executed after whl build for creation of function package on local machine (function and deps in separate packages, no container), by default: poetry run pip install -q -t {output_dir} --find-links=dist {package_name} --no-cache-dir --no-deps --upgrade
-  install_deps_cmd_tmpl               The template of a command executed during installing layer dependencies (all builds with layer), by default: pip install -q -t {output_dir} --no-cache-dir -r {requirements}
-  build_cmd_tmpl                      The template of a command executed during building package (functions and deps built on local), by default: poetry build -q
 
 Options:
   -h, --help                          Display help for the given command. When no command is given display help for the list command.

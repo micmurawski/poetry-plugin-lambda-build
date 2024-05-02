@@ -4,9 +4,7 @@ import os
 import subprocess
 import sys
 from contextlib import contextmanager
-from typing import Generator
-
-from poetry.console.commands.command import Command
+from logging import Logger
 
 
 def join_cmds(*cmds: list[str], joiner: str = " && ") -> str:
@@ -14,7 +12,7 @@ def join_cmds(*cmds: list[str], joiner: str = " && ") -> str:
 
 
 @contextmanager
-def cd(path) -> Generator[None, None, None]:
+def cd(path):
     old_path = os.getcwd()
     os.chdir(path)
     try:
@@ -35,41 +33,50 @@ def mask_string(s: str) -> str:
     return f'{s[:14]}{"*" * len(s)}'
 
 
-def run_python_cmd(*args: list[str],
-                   cmd: Command | None = None,
-                   **kwargs) -> int:
-    cmd = [sys.executable, *args]
-    return run_cmd(*cmd, **kwargs)
-
-
-def run_cmd(
+def run_python_cmd(
     *args: list[str],
-    cmd: Command | None = None,
+    logger: Logger | None = None,
     stdout: int = subprocess.PIPE,
     stderr: int = subprocess.PIPE,
     **kwargs
 ) -> int:
-    cmd = args
+    return run_cmd(sys.executable, *args, logger=logger, stdout=stdout, stderr=stderr, **kwargs)
+
+
+def run_cmd(
+    *args: list[str],
+    logger: Logger | None = None,
+    stdout: int = subprocess.PIPE,
+    stderr: int = subprocess.PIPE,
+    **kwargs
+) -> int:
+    cmd = []
+    for a in args:
+        cmd += a.split(" ")
     process = subprocess.Popen(
         cmd,
         stdout=stdout,
         stderr=stderr,
         **kwargs
     )
-    if cmd is None:
+    if logger:
         while process.poll() is None:
-            cmd.line(process.stdout.readline().decode()[:-1], style="info")
+            logger.info(process.stdout.readline().decode())
     else:
         while process.poll() is None:
-            print(process.stdout.readline().decode(), end="")
+            sys.stdout.write(process.stdout.readline().decode())
 
     _, error = process.communicate()
 
     if process.returncode != 0:
-        sys.stderr.write(error.decode())
+        if logger:
+            logger.error(error.decode())
+        else:
+            sys.stderr.write(error.decode())
         raise RuntimeError(
-            f"Error occurred while running {' '.join(cmd)}", error.decode(
-            ), process.returncode
+            f"Error occurred while running {' '.join(cmd)}",
+            error.decode(),
+            process.returncode,
         )
 
     return process.returncode
@@ -80,6 +87,4 @@ def format_str(string: str, **kwargs) -> str:
         pattern = "{"+k+"}"
         if pattern in string:
             string = string.replace(pattern, v)
-    if "{" in string or "}" in string:
-        raise Exception("Missed params", string, kwargs)
     return string

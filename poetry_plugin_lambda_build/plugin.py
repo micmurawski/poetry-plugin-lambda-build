@@ -5,8 +5,8 @@ from cleo.helpers import argument
 from poetry.console.commands.env_command import EnvCommand
 from poetry.plugins.application_plugin import ApplicationPlugin
 
-from .parameters import ParametersContainer
-from .recipes import Builder
+from poetry_plugin_lambda_build.parameters import ParametersContainer
+from poetry_plugin_lambda_build.recipes import Builder
 
 
 class BuildLambdaCommand(EnvCommand):
@@ -38,6 +38,18 @@ class BuildLambdaCommand(EnvCommand):
         parameters: ParametersContainer = self._get_parameters()
         Builder(self, parameters).build()
         self.line("\n✨ Done!")
+
+    def info(self, txt: str):
+        return self.line(txt, style="info")
+
+    def debug(self, txt: str):
+        return self.line(txt, style="debug")
+
+    def error(self, txt: str):
+        return self.line(txt, style="error")
+
+    def warning(self, txt: str):
+        return self.line(txt, style="warning")
 
 
 def factory() -> BuildLambdaCommand:

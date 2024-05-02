@@ -6,11 +6,15 @@ from pathlib import Path
 
 import pytest
 
-from poetry_plugin_lambda_build.utils import run_python_cmd
+from poetry_plugin_lambda_build.utils import run_python_cmd, cd
+import subprocess
+from logging import Logger
 
 
-def run_poetry_cmd(cmd: str, **kwargs) -> int:
-    return run_python_cmd("-m", "poetry", *cmd.split(" "), **kwargs)
+def run_poetry_cmd(
+    *args: list[str]
+) -> int:
+    return run_python_cmd("-m", "poetry", *args)
 
 
 @pytest.fixture(scope="session", autouse=True)
@@ -19,16 +23,6 @@ def env_vars():
         user = os.environ["USER"]
         os.environ["DOCKER_HOST"] = f"unix:///Users/{user}/.docker/run/docker.sock"
     yield
-
-
-@contextlib.contextmanager
-def cd(path):
-    old_path = os.getcwd()
-    os.chdir(path)
-    try:
-        yield
-    finally:
-        os.chdir(old_path)
 
 
 def _update_pyproject_toml(**kwargs):

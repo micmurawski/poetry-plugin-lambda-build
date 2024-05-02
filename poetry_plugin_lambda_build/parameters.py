@@ -2,45 +2,12 @@ from typing import Any
 
 from poetry.console.exceptions import PoetryConsoleError
 
-from .utils import join_cmds, remove_prefix
-
-MKDIR = "mkdir -p {output_dir}"
-INSTALL_DEPS_CMD_TMPL = "pip install -q -t {output_dir} --no-cache-dir -r {requirements}"
-INSTALL_POETRY_CMD = "pip install poetry --quiet --upgrade pip"
-BUILD_PACKAGE_CMD = "poetry build -q"
-INSTALL_WHL_CMD_TMPL = "poetry run pip install -q -t {output_dir} --find-links=dist {package_name} --no-cache-dir --upgrade"
-INSTALL_WHL_NO_DEPS_CMD_TMPL = "poetry run pip install -q -t {output_dir} --find-links=dist {package_name} --no-cache-dir --no-deps --upgrade"
-
-
-INSTALL_DEPS_CMD_IN_CONTAINER_TMPL = join_cmds(MKDIR, INSTALL_DEPS_CMD_TMPL)
-
-BUILD_N_INSTALL_CMD_TMPL = join_cmds(
-    INSTALL_POETRY_CMD,
-    BUILD_PACKAGE_CMD,
-    MKDIR,
-    INSTALL_WHL_CMD_TMPL
-)
-
-BUILD_N_INSTALL_NO_DEPS_CMD_TMPL = join_cmds(
-    INSTALL_POETRY_CMD,
-    BUILD_PACKAGE_CMD,
-    MKDIR,
-    INSTALL_WHL_NO_DEPS_CMD_TMPL
-)
-
+from poetry_plugin_lambda_build.utils import remove_prefix
 
 DEFAULT_PARAMETERS = {
     "docker_entrypoint": "/bin/bash",
     "docker_network": "host",
     "package_artifact_path": "package.zip",
-
-    "build_and_install_cmd_tmpl": BUILD_N_INSTALL_CMD_TMPL,
-    "build_and_install_no_deps_cmd_tmpl": BUILD_N_INSTALL_NO_DEPS_CMD_TMPL,
-    "install_deps_cmd_tmpl": INSTALL_DEPS_CMD_TMPL,
-    "install_whl_no_deps_cmd_tmpl": INSTALL_WHL_NO_DEPS_CMD_TMPL,
-    "install_whl_cmd_tmpl": INSTALL_WHL_CMD_TMPL,
-    "build_cmd_tmpl": BUILD_PACKAGE_CMD,
-
     "without": [],
     "only": [],
     "with": [],
@@ -69,20 +36,12 @@ ARGS = {
     "only": ("The only dependency groups to include", True, False, None, comma_separated_collection),
     "without": ("The dependency groups to ignore", True, False, None, comma_separated_collection),
     "with": ("The optional dependency groups to include", True, False, None, comma_separated_collection),
-    "zip_compresslevel": (f"None (default for the given compression type) or an integer"
+    "zip_compresslevel": ("None (default for the given compression type) or an integer"
                           "specifying the level to pass to the compressor."
                           "When using ZIP_STORED or ZIP_LZMA this keyword has no effect."
                           "When using ZIP_DEFLATED integers 0 through 9 are accepted."
                           "When using ZIP_BZIP2 integers 1 through 9 are accepted.", True, False, None, int),
-    "zip_compression": (f"ZIP_STORED (no compression), ZIP_DEFLATED (requires zlib), ZIP_BZIP2 (requires bz2) or ZIP_LZMA (requires lzma)", True, False, None, str),
-
-
-    "build_and_install_cmd_tmpl":  (f"The template of a command executed during building artifact package in container is executed (function and deps in the same package, in container), by default: {BUILD_N_INSTALL_CMD_TMPL}", True, False, None, str),
-    "install_whl_cmd_tmpl": (f"The template of a command executed for local artifact package builds (function and deps in the same package, no container), by default: {INSTALL_WHL_NO_DEPS_CMD_TMPL}", True, False, None, str),
-    "build_and_install_no_deps_cmd_tmpl": (f"The template of a command executed during building function package in container is executed (function and deps in separate packages, in container), by default: {BUILD_N_INSTALL_CMD_TMPL}", True, False, None, str),
-    "install_whl_no_deps_cmd_tmpl": (f"The template of a command executed after whl build for creation of function package on local machine (function and deps in separate packages, no container), by default: {INSTALL_WHL_NO_DEPS_CMD_TMPL}", True, False, None, str),
-    "install_deps_cmd_tmpl":  (f"The template of a command executed during installing layer dependencies (all builds with layer), by default: {INSTALL_DEPS_CMD_TMPL}", True, False, None, str),
-    "build_cmd_tmpl":  (f"The template of a command executed during building package (functions and deps built on local), by default: {BUILD_PACKAGE_CMD}", True, False, None, str),
+    "zip_compression": ("ZIP_STORED (no compression), ZIP_DEFLATED (requires zlib), ZIP_BZIP2 (requires bz2) or ZIP_LZMA (requires lzma)", True, False, None, str),
 }
 
 

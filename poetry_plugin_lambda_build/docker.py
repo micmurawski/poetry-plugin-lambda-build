@@ -8,9 +8,8 @@ from typing import Generator
 
 import docker
 from docker.models.containers import Container
-from poetry.console.commands.command import Command
 
-from .utils import cd
+from poetry_plugin_lambda_build.utils import cd
 
 
 def _parse_str_to_bool(value: str) -> bool:
@@ -69,7 +68,7 @@ def copy_from(src: str, dst: str):
 
 
 @contextmanager
-def run_container(cmd: Command, **kwargs) -> Generator[Container, None, None]:
+def run_container(logger, **kwargs) -> Generator[Container, None, None]:
     image: str = kwargs.pop("image")
     options: dict = {k: True for k in kwargs.pop("options", [])}
     kwargs: dict = {k: v for k, v in kwargs.items() if v}
@@ -82,17 +81,17 @@ def run_container(cmd: Command, **kwargs) -> Generator[Container, None, None]:
     docker_container: Container = get_docker_client().containers.run(
         image, **kwargs, **options, tty=True, detach=True
     )
-    cmd.line(f"Running docker container image: {image}", style="debug")
+    logger.debug(f"Running docker container image: {image}")
     try:
         yield docker_container
     finally:
-        cmd.line("Killing docker container...", style="debug")
+        logger.debug("Killing docker container...")
         docker_container.kill()
-        cmd.line("Removing docker container...", style="debug")
+        logger.debug("Removing docker container...")
         docker_container.remove(v=True)
 
 
-def exec_run_container(cmd: Command, container: Container, entrypoint: str, container_cmd: str):
+def exec_run_container(logger, container: Container, entrypoint: str, container_cmd: str):
     _, stream = container.exec_run(
         f'{entrypoint} -c "{container_cmd}"',
         stdout=True,
@@ -100,4 +99,4 @@ def exec_run_container(cmd: Command, container: Container, entrypoint: str, cont
         stream=True
     )
     for line in stream:
-        cmd.line(line.strip().decode(), style="info")
+        logger.info(line.strip().decode())
