@@ -1,4 +1,3 @@
-import contextlib
 import os
 import platform
 import zipfile
@@ -6,9 +5,7 @@ from pathlib import Path
 
 import pytest
 
-from poetry_plugin_lambda_build.utils import run_python_cmd, cd
-import subprocess
-from logging import Logger
+from poetry_plugin_lambda_build.utils import cd, run_python_cmd
 
 
 def run_poetry_cmd(

@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from typing import Any
 
 from poetry.console.exceptions import PoetryConsoleError
@@ -54,13 +56,7 @@ class ParametersContainer(dict):
 
     def put(self, key: Any, value: Any) -> None:
         _parser = self.ARGS[key][-1]
-        prev_value = self.get(key)
-
-        if isinstance(prev_value, list):
-            self[key].append(value)
-        else:
-            self[key] = _parser(value)
-        return
+        self[key] = _parser(value)
 
     def __getitem__(self, key: Any) -> Any:
         if key not in self.ARGS:
@@ -69,12 +65,7 @@ class ParametersContainer(dict):
         return super().__getitem__(key)
 
     def get_section(self, section: str) -> dict:
-        result = {}
-        for k in self:
-            if k.startswith(section):
-                key = remove_prefix(k, section+"_")
-                result[key] = self[k]
-        return result
+        return {remove_prefix(k, section+"_"): self[k] for k in self if k.startswith(section)}
 
     @property
     def groups(self) -> dict:

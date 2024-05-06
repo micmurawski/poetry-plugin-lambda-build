@@ -1,4 +1,3 @@
-
 from poetry_plugin_lambda_build.utils import join_cmds
 
 MKDIR = "mkdir -p {output_dir}"
