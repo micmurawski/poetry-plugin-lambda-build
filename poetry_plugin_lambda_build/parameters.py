@@ -38,10 +38,10 @@ ARGS = {
     "only": ("The only dependency groups to include", True, False, None, comma_separated_collection),
     "without": ("The dependency groups to ignore", True, False, None, comma_separated_collection),
     "with": ("The optional dependency groups to include", True, False, None, comma_separated_collection),
-    "zip_compresslevel": ("None (default for the given compression type) or an integer"
-                          "specifying the level to pass to the compressor."
-                          "When using ZIP_STORED or ZIP_LZMA this keyword has no effect."
-                          "When using ZIP_DEFLATED integers 0 through 9 are accepted."
+    "zip_compresslevel": ("None (default for the given compression type) or an integer "
+                          "specifying the level to pass to the compressor. "
+                          "When using ZIP_STORED or ZIP_LZMA this keyword has no effect. "
+                          "When using ZIP_DEFLATED integers 0 through 9 are accepted. "
                           "When using ZIP_BZIP2 integers 1 through 9 are accepted.", True, False, None, int),
     "zip_compression": ("ZIP_STORED (no compression), ZIP_DEFLATED (requires zlib), ZIP_BZIP2 (requires bz2) or ZIP_LZMA (requires lzma)", True, False, None, str),
 }
