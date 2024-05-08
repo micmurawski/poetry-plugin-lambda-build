@@ -40,7 +40,7 @@ def copy_to(src: str, dst: str):
 
     with TemporaryDirectory() as tmp_dir:
         src_name = os.path.basename(src)
-        tar_filename = src_name + ".tar"
+        tar_filename = src_name + "_archive.tar"
         tar_path = os.path.join(tmp_dir, tar_filename)
         tar = tarfile.open(tar_path, mode="w")
         with cd(os.path.dirname(src)):
@@ -56,7 +56,7 @@ def copy_to(src: str, dst: str):
 def copy_from(src: str, dst: str):
     name, src = src.split(":")
     container = get_docker_client().containers.get(name)
-    tar_path = dst + ".tar"
+    tar_path = dst + "_archive.tar"
     f = open(tar_path, "wb")
     bits, _ = container.get_archive(src)
     for chunk in bits:
@@ -64,6 +64,7 @@ def copy_from(src: str, dst: str):
     f.close()
     tar = tarfile.open(tar_path)
     tar.extractall(dst)
+    tar.close()
     os.remove(tar_path)
 
 

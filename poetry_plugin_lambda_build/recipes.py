@@ -50,18 +50,18 @@ class BuildType(enum.Enum):
                 return cls.MERGED
 
 
-def get_requirements(self: Command, parameters: ParametersContainer) -> str:
+def get_requirements(cmd: Command, parameters: ParametersContainer) -> str:
     return RequirementsExporter(
-        poetry=self.poetry,
-        io=self.io,
+        poetry=cmd.poetry,
+        io=cmd.io,
         groups=parameters.groups
     ).export()
 
 
-def get_indexes(self: Command, parameters: ParametersContainer) -> str:
+def get_indexes(cmd: Command, parameters: ParametersContainer) -> str:
     return RequirementsExporter(
-        poetry=self.poetry,
-        io=self.io,
+        poetry=cmd.poetry,
+        io=cmd.io,
         groups=parameters.groups
     ).export_indexes()
 
@@ -222,7 +222,6 @@ class Builder:
             create_zip_package(
                 dir=remove_suffix(package_dir, install_dir),
                 output=target,
-                exclude=[],
                 **self.parameters.get_section("zip")
             )
             self.cmd.info(
@@ -287,7 +286,6 @@ class Builder:
             create_zip_package(
                 dir=remove_suffix(package_dir, install_dir),
                 output=target,
-                exclude=[],
                 **self.parameters.get_section("zip")
             )
             self.cmd.info(
