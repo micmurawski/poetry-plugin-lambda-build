@@ -10,7 +10,6 @@ Additionally it provides docker container support for build inside container
 
 ```bash
 poetry self add poetry-plugin-lambda-build
-poetry self add poetry-plugin-export
 ```
 
 ## Execution
@@ -83,7 +82,7 @@ Description:
   Execute to build lambda lambda artifacts
 
 Usage:
-  build-lambda [options] [--] [<docker_image> [<docker_entrypoint> [<docker_environment> [<docker_dns> [<docker_network> [<docker_network_disabled> [<docker_network_mode> [<docker_platform> [<package_install_dir> [<layer_install_dir> [<function_install_dir> [<install_dir> [<package_artifact_path> [<layer_artifact_path> [<function_artifact_path> [<only> [<without> [<with> [<install_deps_cmd> [<install_no_deps_cmd>]]]]]]]]]]]]]]]]]]]]
+  build-lambda [options] [--] [<docker_image> [<docker_entrypoint> [<docker_environment> [<docker_dns> [<docker_network> [<docker_network_disabled> [<docker_network_mode> [<docker_platform> [<package_install_dir> [<layer_install_dir> [<function_install_dir> [<install_dir> [<package_artifact_path> [<layer_artifact_path> [<function_artifact_path> [<only> [<without> [<with> [<zip_compresslevel> [<zip_compression>]]]]]]]]]]]]]]]]]]]]
 
 Arguments:
   docker_image               The image to run
@@ -104,8 +103,8 @@ Arguments:
   only                       The only dependency groups to include
   without                    The dependency groups to ignore
   with                       The optional dependency groups to include
-  install_deps_cmd           Install dependencies command. Executed during installation of dependencies layer, by default: mkdir -p {container_cache_dir} && pip install -q --upgrade pip && pip install -q -t {container_cache_dir} --no-cache-dir -r {requirements}
-  install_no_deps_cmd        Install without dependencies command. Executed during installation of function, by default: mkdir -p {package_dir} && poetry run pip install --quiet -t {package_dir} --no-cache-dir --no-deps . --upgrade
+  zip_compresslevel          None (default for the given compression type) or an integer specifying the level to pass to the compressor. When using ZIP_STORED or ZIP_LZMA this keyword has no effect. When using ZIP_DEFLATED integers 0 through 9 are accepted. When using ZIP_BZIP2 integers 1 through 9 are accepted.
+  zip_compression            ZIP_STORED (no compression), ZIP_DEFLATED (requires zlib), ZIP_BZIP2 (requires bz2) or ZIP_LZMA (requires lzma)
 
 Options:
   -h, --help                 Display help for the given command. When no command is given display help for the list command.
