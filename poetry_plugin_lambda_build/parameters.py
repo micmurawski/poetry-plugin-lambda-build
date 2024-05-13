@@ -55,13 +55,17 @@ class ParametersContainer(dict):
         self.update(DEFAULT_PARAMETERS)
 
     def put(self, key: Any, value: Any) -> None:
+        self.check_key(key)
         _parser = self.ARGS[key][-1]
         self[key] = _parser(value)
 
-    def __getitem__(self, key: Any) -> Any:
+    def check_key(self, key: Any) -> bool:
         if key not in self.ARGS:
             raise PoetryConsoleError(
                 f"<error>Error: Bad input parameter: {key} run poetry build-lambda --help for more info</error>")
+
+    def __getitem__(self, key: Any) -> Any:
+        self.check_key(key)
         return super().__getitem__(key)
 
     def get_section(self, section: str) -> dict:
