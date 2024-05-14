@@ -4,7 +4,7 @@ MKDIR = "mkdir -p {output_dir}"
 INSTALL_DEPS_CMD_TMPL = "pip install -q -t {output_dir} --no-cache-dir -r {requirements}"
 INSTALL_POETRY_CMD = "pip install poetry --quiet --upgrade pip"
 BUILD_PACKAGE_CMD = "poetry build -q"
-INSTALL_WHL_CMD_TMPL = "poetry run pip install -q -t {output_dir} --find-links=dist {package_name} --no-cache-dir --upgrade"
+INSTALL_WHL_CMD_TMPL = "poetry run pip install -q -t {output_dir} --find-links=dist {package_name} --no-cache-dir --upgrade {indexes}"
 INSTALL_WHL_NO_DEPS_CMD_TMPL = "poetry run pip install -q -t {output_dir} --find-links=dist {package_name} --no-cache-dir --no-deps --upgrade"
 
 
