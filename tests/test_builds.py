@@ -99,7 +99,7 @@ PARAMS = [
     (
         {
             "package_artifact_path": "function.zip",
-            "install_dir": "python"
+            "package_install_dir": "python"
         },
         {},
         [
@@ -116,7 +116,7 @@ PARAMS = [
     (
         {
             "package_artifact_path": "function.zip",
-            "install_dir": "python"
+            "package_install_dir": "python"
         },
         {
             "docker_image": DOCKER_IMG,
