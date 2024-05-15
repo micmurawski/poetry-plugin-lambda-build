@@ -269,7 +269,7 @@ class Builder:
     def build_package(self):
         self.cmd.info("Building package...")
         with TemporaryDirectory() as package_dir:
-            install_dir = self.parameters.get("install_dir", "")
+            install_dir = self.parameters.get("package_install_dir", "")
             package_dir = os.path.join(package_dir, install_dir)
             os.makedirs(package_dir, exist_ok=True)
             target = os.path.join(

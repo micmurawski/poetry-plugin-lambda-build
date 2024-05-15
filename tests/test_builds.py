@@ -1,4 +1,5 @@
 import os
+import sys
 import platform
 import zipfile
 from pathlib import Path
@@ -18,7 +19,8 @@ def run_poetry_cmd(
 def env_vars():
     if platform.system() == "Darwin":
         user = os.environ["USER"]
-        os.environ["DOCKER_HOST"] = f"unix:///Users/{user}/.docker/run/docker.sock"
+        os.environ["DOCKER_HOST"] = f"unix:///Users/{
+            user}/.docker/run/docker.sock"
     yield
 
 
@@ -51,7 +53,8 @@ def assert_not_exists_zip_file(filename: str, base_path: str = None, files: list
         assert file not in _list, f"{file} exists in zip package"
 
 
-DOCKER_IMG = "public.ecr.aws/sam/build-python3.11:latest-x86_64"
+PYTHON_VER = f"{sys.version_info[0]}.{sys.version_info[1]}"
+DOCKER_IMG = f"public.ecr.aws/sam/build-python{PYTHON_VER}:latest-x86_64"
 
 PARAMS = [
     (

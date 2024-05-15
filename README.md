@@ -49,8 +49,8 @@ artifact_path = "package.zip"
 ### AWS Lambda - all in one - layer package
 ```.toml
 [tool.poetry-plugin-lambda-build]
-install_dir = "python"
-artifact_path = "layer.zip"
+package_install_dir = "python"
+package_artifact_path = "layer.zip"
 ```
 ### AWS Lambda - separated - separate layer package and function package
 
