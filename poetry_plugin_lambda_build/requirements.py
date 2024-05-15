@@ -172,13 +172,13 @@ class RequirementsExporter:
             url = repository.authenticated_url
             parsed_url = urllib.parse.urlsplit(url)
             if parsed_url.scheme == "http":
-                indexes_header += f"--trusted-host {parsed_url.netloc}\n"
+                indexes_header += f" --trusted-host {parsed_url.netloc}\n"
             if (
                 not has_pypi_repository
                 and repository is self._poetry.pool.repositories[0]
             ):
-                indexes_header += f"--index-url {url}"
+                indexes_header += f" --index-url {url}"
             else:
-                indexes_header += f"--extra-index-url {url}"
+                indexes_header += f" --extra-index-url {url}"
 
         return indexes_header
