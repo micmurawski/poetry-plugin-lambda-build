@@ -19,8 +19,7 @@ def run_poetry_cmd(
 def env_vars():
     if platform.system() == "Darwin":
         user = os.environ["USER"]
-        os.environ["DOCKER_HOST"] = f"unix:///Users/{
-            user}/.docker/run/docker.sock"
+        os.environ["DOCKER_HOST"] = f"unix:///Users/{user}/.docker/run/docker.sock"
     yield
 
 
