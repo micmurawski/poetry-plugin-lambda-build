@@ -49,8 +49,8 @@ artifact_path = "package.zip"
 ### AWS Lambda - all in one - layer package
 ```.toml
 [tool.poetry-plugin-lambda-build]
-install_dir = "python"
-artifact_path = "layer.zip"
+package_install_dir = "python"
+package_artifact_path = "layer.zip"
 ```
 ### AWS Lambda - separated - separate layer package and function package
 
@@ -83,7 +83,6 @@ Description:
 
 Usage:
   build-lambda [options] [--] [<docker_image> [<docker_entrypoint> [<docker_environment> [<docker_dns> [<docker_network> [<docker_network_disabled> [<docker_network_mode> [<docker_platform> [<package_install_dir> [<layer_install_dir> [<function_install_dir> [<install_dir> [<package_artifact_path> [<layer_artifact_path> [<function_artifact_path> [<only> [<without> [<with> [<zip_compresslevel> [<zip_compression>]]]]]]]]]]]]]]]]]]]]
-
 Arguments:
   docker_image               The image to run
   docker_entrypoint          The entrypoint for the container (comma separated string)
@@ -93,13 +92,12 @@ Arguments:
   docker_network_disabled    Disable networking ex. docker_network_disabled=0
   docker_network_mode        Network_mode
   docker_platform            Platform in the format os[/arch[/variant]]. Only used if the method needs to pull the requested image.
-  package_install_dir        Installation directory inside zip artifact for single zip package
-  layer_install_dir          Installation directory inside zip artifact for layer zip package
-  function_install_dir       Installation directory inside zip artifact for function zip package
-  install_dir                Installation directory inside zip artifact for zip package (not function layer separation)
   package_artifact_path      Output package path
-  layer_artifact_path        Output layer package path
+  package_install_dir        Installation directory inside zip artifact for single zip package
   function_artifact_path     Output function package path
+  function_install_dir       Installation directory inside zip artifact for function zip package
+  layer_artifact_path        Output layer package path
+  layer_install_dir          Installation directory inside zip artifact for layer zip package
   only                       The only dependency groups to include
   without                    The dependency groups to ignore
   with                       The optional dependency groups to include
