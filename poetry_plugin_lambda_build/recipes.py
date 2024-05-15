@@ -7,16 +7,17 @@ from tempfile import TemporaryDirectory
 from poetry.console.commands.command import Command
 
 from poetry_plugin_lambda_build.commands import (
-    BUILD_N_INSTALL_CMD_TMPL, BUILD_N_INSTALL_NO_DEPS_CMD_TMPL,
-    BUILD_PACKAGE_CMD, INSTALL_DEPS_CMD_TMPL, INSTALL_WHL_CMD_TMPL,
-    INSTALL_WHL_NO_DEPS_CMD_TMPL)
+    INSTALL_CMD_TMPL, INSTALL_DEPS_CMD_IN_CONTAINER_TMPL,
+    INSTALL_DEPS_CMD_TMPL, INSTALL_IN_CONTAINER_CMD_TMPL,
+    INSTALL_IN_CONTAINER_NO_DEPS_CMD_TMPL, INSTALL_NO_DEPS_CMD_TMPL)
 from poetry_plugin_lambda_build.docker import (copy_from, copy_to,
                                                exec_run_container,
                                                run_container)
 from poetry_plugin_lambda_build.parameters import ParametersContainer
 from poetry_plugin_lambda_build.requirements import RequirementsExporter
-from poetry_plugin_lambda_build.utils import (format_str, mask_string,
-                                              remove_suffix, run_python_cmd)
+from poetry_plugin_lambda_build.utils import (format_str, join_cmds,
+                                              mask_string, remove_suffix,
+                                              run_python_cmd)
 from poetry_plugin_lambda_build.zip import create_zip_package
 
 CONTAINER_CACHE_DIR = "/opt/lambda/cache"
@@ -97,8 +98,17 @@ class Builder:
                 dst=f"{container.id}:/requirements.txt"
             )
             self.cmd.info("Installing requirements")
+
+            if self.parameters.get("pre_install_script"):
+                install_deps_cmd_in_container_tmpl = join_cmds(
+                    self.parameters.get("pre_install_script"),
+                    INSTALL_DEPS_CMD_IN_CONTAINER_TMPL
+                )
+            else:
+                install_deps_cmd_in_container_tmpl = INSTALL_DEPS_CMD_IN_CONTAINER_TMPL
+
             cmd, print_safe_cmd = self.format_str(
-                INSTALL_DEPS_CMD_TMPL,
+                install_deps_cmd_in_container_tmpl,
                 output_dir=CONTAINER_CACHE_DIR,
                 requirements="/requirements.txt",
             )
@@ -173,9 +183,16 @@ class Builder:
                 src=f"{CURRENT_WORK_DIR}/.",
                 dst=f"{container.id}:/"
             )
+            if self.parameters.get("pre_install_script"):
+                install_in_container_no_deps_cmd_tmpl = join_cmds(
+                    self.parameters.get("pre_install_script"),
+                    INSTALL_IN_CONTAINER_NO_DEPS_CMD_TMPL
+                )
+            else:
+                install_in_container_no_deps_cmd_tmpl = INSTALL_IN_CONTAINER_NO_DEPS_CMD_TMPL
 
             cmd, print_safe_cmd = self.format_str(
-                BUILD_N_INSTALL_NO_DEPS_CMD_TMPL,
+                install_in_container_no_deps_cmd_tmpl,
                 output_dir=CONTAINER_CACHE_DIR
             )
 
@@ -189,12 +206,17 @@ class Builder:
             )
 
     def _build_separated_function_on_local(self, package_dir: str):
-        cmd, print_safe_cmd = self.format_str(BUILD_PACKAGE_CMD)
         os.makedirs(package_dir, exist_ok=True)
-        self.cmd.debug(f"Executing: {print_safe_cmd}")
-        run_python_cmd("-m", cmd, logger=self.cmd)
+
+        if self.parameters.get("pre_install_script"):
+            install_no_deps_cmd_tmpl = join_cmds(
+                self.parameters.get("pre_install_script"),
+                INSTALL_NO_DEPS_CMD_TMPL
+            )
+        else:
+            install_no_deps_cmd_tmpl = INSTALL_NO_DEPS_CMD_TMPL
         cmd, print_safe_cmd = self.format_str(
-            INSTALL_WHL_NO_DEPS_CMD_TMPL,
+            install_no_deps_cmd_tmpl,
             output_dir=package_dir,
         )
         self.cmd.debug(f"Executing: {print_safe_cmd}")
@@ -233,8 +255,16 @@ class Builder:
             self.cmd.info("Coping content")
             copy_to(f"{CURRENT_WORK_DIR}/.", f"{container.id}:/")
 
+            if self.parameters.get("pre_install_script"):
+                install_in_container_cmd_tmpl = join_cmds(
+                    self.parameters.get("pre_install_script"),
+                    INSTALL_IN_CONTAINER_CMD_TMPL
+                )
+            else:
+                install_in_container_cmd_tmpl = INSTALL_IN_CONTAINER_CMD_TMPL
+
             cmd, print_safe_cmd = self.format_str(
-                BUILD_N_INSTALL_CMD_TMPL,
+                install_in_container_cmd_tmpl,
                 output_dir=CONTAINER_CACHE_DIR,
             )
 
@@ -253,13 +283,17 @@ class Builder:
 
     def _build_package_on_local(self, package_dir: str):
         self.cmd.info("Building package on local")
+
+        if self.parameters.get("pre_install_script"):
+            install_cmd_tmpl = join_cmds(
+                self.parameters.get("pre_install_script"),
+                INSTALL_CMD_TMPL
+            )
+        else:
+            install_cmd_tmpl = INSTALL_CMD_TMPL
+
         cmd, print_safe_cmd = self.format_str(
-            BUILD_PACKAGE_CMD
-        )
-        self.cmd.debug(f"Executing: {print_safe_cmd}")
-        run_python_cmd("-m", cmd, logger=self.cmd)
-        cmd, print_safe_cmd = self.format_str(
-            INSTALL_WHL_CMD_TMPL,
+            install_cmd_tmpl,
             output_dir=package_dir
         )
         self.cmd.debug(

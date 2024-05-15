@@ -43,6 +43,7 @@ ARGS = {
                           "When using ZIP_DEFLATED integers 0 through 9 are accepted. "
                           "When using ZIP_BZIP2 integers 1 through 9 are accepted.", True, False, None, int),
     "zip_compression": ("ZIP_STORED (no compression), ZIP_DEFLATED (requires zlib), ZIP_BZIP2 (requires bz2) or ZIP_LZMA (requires lzma)", True, False, None, str),
+    "pre_install_script": ("The script that is executed before installation.", True, False, None, str),
 }
 
 

@@ -158,7 +158,7 @@ class RequirementsExporter:
         return content
 
     def export_indexes(self) -> str:
-        indexes_header = ""
+        args = []
         has_pypi_repository = any(
             r.name.lower() == "pypi" for r in self._poetry.pool.all_repositories
         )
@@ -172,13 +172,13 @@ class RequirementsExporter:
             url = repository.authenticated_url
             parsed_url = urllib.parse.urlsplit(url)
             if parsed_url.scheme == "http":
-                indexes_header += f" --trusted-host {parsed_url.netloc}\n"
+                args.append(f"--trusted-host {parsed_url.netloc}\n")
             if (
                 not has_pypi_repository
                 and repository is self._poetry.pool.repositories[0]
             ):
-                indexes_header += f" --index-url {url}"
+                args.append(f"--index-url {url}")
             else:
-                indexes_header += f" --extra-index-url {url}"
+                args.append(f"--extra-index-url {url}")
 
-        return indexes_header
+        return " ".join(args)

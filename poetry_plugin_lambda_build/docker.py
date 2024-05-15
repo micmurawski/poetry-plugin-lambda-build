@@ -93,7 +93,7 @@ def run_container(logger, **kwargs) -> Generator[Container, None, None]:
 
 
 def exec_run_container(logger, container: Container, entrypoint: str, container_cmd: str):
-    _, stream = container.exec_run(
+    exit_code, stream = container.exec_run(
         f'{entrypoint} -c "{container_cmd}"',
         stdout=True,
         stderr=True,
@@ -101,3 +101,8 @@ def exec_run_container(logger, container: Container, entrypoint: str, container_
     )
     for line in stream:
         logger.info(line.strip().decode())
+
+    if exit_code and exit_code != 0:
+        raise RuntimeError(
+            f"Exec run in container resulted with exit code: {exit_code}"
+        )

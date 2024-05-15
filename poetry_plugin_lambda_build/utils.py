@@ -74,7 +74,6 @@ def run_cmd(
         else:
             sys.stderr.write(error.decode())
         raise RuntimeError(
-            f"Error occurred while running {' '.join(cmd)}",
             error.decode(),
             process.returncode,
         )
