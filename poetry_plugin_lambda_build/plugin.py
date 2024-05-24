@@ -22,9 +22,6 @@ class BuildLambdaCommand(EnvCommand):
     def _get_parameters(self) -> ParametersContainer:
         pyproject_data = self.poetry.pyproject.data
         container = ParametersContainer()
-        for token in filter(lambda token: any([token.startswith(f"{arg}=") for arg in ParametersContainer.ARGS]), self.io.input._tokens[1:]):
-            key, value = token.strip().split("=")
-            container.put(key, value)
 
         try:
             plugin_conf = pyproject_data["tool"]["poetry-plugin-lambda-build"]
@@ -34,6 +31,11 @@ class BuildLambdaCommand(EnvCommand):
         if plugin_conf:
             for k in plugin_conf:
                 container.put(k, plugin_conf[k])
+
+        for token in filter(lambda token: any([token.startswith(f"{arg}=") for arg in ParametersContainer.ARGS]), self.io.input._tokens[1:]):
+            key, value = token.strip().split("=")
+            container.put(key, value)
+
         return container
 
     def handle(self) -> Any:
