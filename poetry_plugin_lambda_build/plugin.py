@@ -22,6 +22,7 @@ class BuildLambdaCommand(EnvCommand):
     def _get_parameters(self) -> ParametersContainer:
         pyproject_data = self.poetry.pyproject.data
         container = ParametersContainer()
+
         try:
             plugin_conf = pyproject_data["tool"]["poetry-plugin-lambda-build"]
         except KeyError:
