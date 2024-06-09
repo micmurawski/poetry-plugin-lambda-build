@@ -1,20 +1,17 @@
 from __future__ import annotations
 
 import os
-import sys
 import platform
-import zipfile
+import sys
 from pathlib import Path
 
 import pytest
 
-from poetry_plugin_lambda_build.utils import cd, run_python_cmd
-
-
-def run_poetry_cmd(
-    *args: list[str]
-) -> int:
-    return run_python_cmd("-m", "poetry", *args)
+from poetry_plugin_lambda_build.utils import cd
+from tests.utils import (assert_file_exists_in_dir, assert_file_exists_in_zip,
+                         assert_file_not_exists_in_dir,
+                         assert_file_not_exists_in_zip, run_poetry_cmd,
+                         update_pyproject_toml)
 
 
 @pytest.fixture(scope="session", autouse=True)
@@ -23,35 +20,6 @@ def env_vars():
         user = os.environ["USER"]
         os.environ["DOCKER_HOST"] = f"unix:///Users/{user}/.docker/run/docker.sock"
     yield
-
-
-def _update_pyproject_toml(**kwargs):
-    with open("pyproject.toml", "a") as f:
-        f.write("[tool.poetry-plugin-lambda-build]\n")
-        for k, v in kwargs.items():
-            f.write(f'{k} = "{v}" \n')
-
-
-def assert_exists_zip_file(filename: str, base_path: str = None, files: list = None):
-    zip = zipfile.ZipFile(filename)
-    _list = zip.namelist()
-    if files is None:
-        files = []
-    if base_path:
-        for file_path in _list:
-            assert file_path.startswith(
-                base_path), f"Install directory is wrong for {file_path}."
-    for file in files:
-        assert file in _list, f"{file} does not exists in zip package"
-
-
-def assert_not_exists_zip_file(filename: str, base_path: str = None, files: list = None):
-    zip = zipfile.ZipFile(filename)
-    _list = zip.namelist()
-    if files is None:
-        files = []
-    for file in files:
-        assert file not in _list, f"{file} exists in zip package"
 
 
 PYTHON_VER = f"{sys.version_info[0]}.{sys.version_info[1]}"
@@ -67,13 +35,33 @@ PARAMS = [
         },
         {},
         [
-            lambda: assert_exists_zip_file("layer.zip", "python"),
-            lambda: assert_not_exists_zip_file(
+            lambda: assert_file_exists_in_zip("layer.zip", "python"),
+            lambda: assert_file_not_exists_in_zip(
                 "layer.zip",
                 files=["python/requirements.txt"]
             ),
-            lambda: assert_exists_zip_file(
+            lambda: assert_file_exists_in_zip(
                 "function.zip",
+                files=["test_project/handler.py"]
+            )
+        ]
+    ),
+    (
+        {
+            "docker_image": DOCKER_IMG,
+            "layer_install_dir": "python",
+            "layer_artifact_path": "layer",
+            "function_artifact_path": "function"
+        },
+        {},
+        [
+            lambda: assert_file_exists_in_dir("layer", "python"),
+            lambda: assert_file_not_exists_in_dir(
+                "layer",
+                files=["python/requirements.txt"]
+            ),
+            lambda: assert_file_exists_in_dir(
+                "function",
                 files=["test_project/handler.py"]
             )
         ]
@@ -86,12 +74,12 @@ PARAMS = [
         },
         {},
         [
-            lambda: assert_exists_zip_file("layer.zip", "python"),
-            lambda: assert_not_exists_zip_file(
+            lambda: assert_file_exists_in_zip("layer.zip", "python"),
+            lambda: assert_file_not_exists_in_zip(
                 "layer.zip",
                 files=["python/requirements.txt"]
             ),
-            lambda: assert_exists_zip_file(
+            lambda: assert_file_exists_in_zip(
                 "function.zip",
                 files=["test_project/handler.py"]
             )
@@ -104,11 +92,11 @@ PARAMS = [
         },
         {},
         [
-            lambda: assert_exists_zip_file(
+            lambda: assert_file_exists_in_zip(
                 "function.zip",
                 files=["python/test_project/handler.py"]
             ),
-            lambda: assert_not_exists_zip_file(
+            lambda: assert_file_not_exists_in_zip(
                 "function.zip",
                 files=["python/requirements.txt"]
             ),
@@ -123,11 +111,11 @@ PARAMS = [
             "docker_image": DOCKER_IMG,
         },
         [
-            lambda: assert_exists_zip_file(
+            lambda: assert_file_exists_in_zip(
                 "function.zip",
                 files=["python/test_project/handler.py"]
             ),
-            lambda: assert_not_exists_zip_file(
+            lambda: assert_file_not_exists_in_zip(
                 "function.zip",
                 files=["python/requirements.txt"]
             ),
@@ -140,11 +128,11 @@ PARAMS = [
         },
         {},
         [
-            lambda: assert_exists_zip_file(
+            lambda: assert_file_exists_in_zip(
                 "function.zip",
                 files=["test_project/handler.py"]
             ),
-            lambda: assert_not_exists_zip_file(
+            lambda: assert_file_not_exists_in_zip(
                 "function.zip",
                 files=["pytest/__init__.py", "*requirements*"]
             )
@@ -164,7 +152,7 @@ def test_build_in_container(config: dict, args: dict, assert_files: list, tmp_pa
             assert run_poetry_cmd("self add poetry-plugin-export") == 0
             open(handler_file, "w").close()
             if config:
-                _update_pyproject_toml(
+                update_pyproject_toml(
                     **config
                 )
             arguments = " ".join(f'{k}={v}' for k, v in args.items())
