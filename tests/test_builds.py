@@ -18,8 +18,7 @@ from tests.utils import (assert_file_exists_in_dir, assert_file_exists_in_zip,
 def env_vars():
     if platform.system() == "Darwin":
         user = os.environ["USER"]
-        os.environ["DOCKER_HOST"] = f"unix:///Users/{
-            user}/.docker/run/docker.sock"
+        os.environ["DOCKER_HOST"] = f"unix:///Users/{user}/.docker/run/docker.sock"
     yield
 
 
