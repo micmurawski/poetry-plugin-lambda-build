@@ -18,10 +18,10 @@ def parse_poetry_args(tokens: list[str]) -> Generator[tuple[str], None, None]:
             pass
         else:
             if i+1 < len(tokens):
-                snd = tokens[i+1].strip()
+                val = tokens[i+1].strip()
             else:
-                snd = None
-            yield tokens[i].strip(), snd
+                val = None
+            yield tokens[i].strip(), val
             i += 1
         i += 1
 
