@@ -14,7 +14,7 @@ def parse_poetry_args(tokens: list[str]) -> Generator[tuple[str], None, None]:
         if "=" in tokens[i]:
             k, v = tokens[i].strip().split("=")
             yield k, v
-        elif tokens[i].startswith("-"):
+        elif tokens[i].startswith("-") or len(tokens[i]) == 0:
             pass
         else:
             if i+1 < len(tokens):
