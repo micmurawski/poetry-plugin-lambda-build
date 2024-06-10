@@ -8,12 +8,18 @@ from logging import Logger
 from typing import Generator
 
 
-def parse_poetry_args(args_map: dict[str, tuple], tokens: list[str]) -> Generator[tuple[str], None, None]:
-    for token in filter(lambda token: any([token.startswith(f"{arg}=") or token.startswith(f"{arg} ") for arg in args_map]), tokens):
-        if token.endswith("="):
-            yield token.strip().split("=")
-        elif token.endswith(" "):
-            yield token.strip().split(" ", 1)
+def parse_poetry_args(tokens: list[str]) -> Generator[tuple[str], None, None]:
+    i = 0
+    while i < len(tokens):
+        if "=" in tokens[i]:
+            k, v = tokens[i].strip().split("=")
+            yield k, v
+        elif tokens[i].startswith("-"):
+            pass
+        else:
+            yield tokens[i].strip(), tokens[i+1].strip()
+            i += 1
+        i += 1
 
 
 def join_cmds(*cmds: list[str], joiner: str = " && ") -> str:

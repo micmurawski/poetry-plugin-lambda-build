@@ -33,7 +33,7 @@ class BuildLambdaCommand(EnvCommand):
             for k in plugin_conf:
                 container.put(k, plugin_conf[k])
 
-        for key, value in parse_poetry_args(ParametersContainer.ARGS, self.io.input._tokens[1:]):
+        for key, value in parse_poetry_args(self.io.input._tokens[1:]):
             container.put(key, value)
 
         return container
