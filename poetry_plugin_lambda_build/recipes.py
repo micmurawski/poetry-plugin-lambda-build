@@ -7,18 +7,30 @@ from tempfile import TemporaryDirectory
 from poetry.console.commands.command import Command
 
 from poetry_plugin_lambda_build.commands import (
-    INSTALL_CMD_TMPL, INSTALL_DEPS_CMD_IN_CONTAINER_TMPL,
-    INSTALL_DEPS_CMD_TMPL, INSTALL_IN_CONTAINER_CMD_TMPL,
-    INSTALL_IN_CONTAINER_NO_DEPS_CMD_TMPL, INSTALL_NO_DEPS_CMD_TMPL)
-from poetry_plugin_lambda_build.docker import (copy_from, copy_to,
-                                               exec_run_container,
-                                               run_container)
+    INSTALL_CMD_TMPL,
+    INSTALL_DEPS_CMD_IN_CONTAINER_TMPL,
+    INSTALL_DEPS_CMD_TMPL,
+    INSTALL_IN_CONTAINER_CMD_TMPL,
+    INSTALL_IN_CONTAINER_NO_DEPS_CMD_TMPL,
+    INSTALL_NO_DEPS_CMD_TMPL
+)
+from poetry_plugin_lambda_build.docker import (
+    copy_from_container,
+    copy_to_container,
+    exec_run_container,
+    run_container
+)
 from poetry_plugin_lambda_build.parameters import ParametersContainer
 from poetry_plugin_lambda_build.requirements import RequirementsExporter
-from poetry_plugin_lambda_build.utils import (format_str, join_cmds,
-                                              mask_string, remove_suffix,
-                                              run_python_cmd)
+from poetry_plugin_lambda_build.utils import (
+    format_str,
+    join_cmds,
+    mask_string,
+    remove_suffix,
+    run_python_cmd
+)
 from poetry_plugin_lambda_build.zip import create_zip_package
+import shutil
 
 CONTAINER_CACHE_DIR = "/opt/lambda/cache"
 CURRENT_WORK_DIR = os.getcwd()
@@ -93,7 +105,7 @@ class Builder:
     def _build_separate_layer_in_container(self, requirements_path: str, layer_output_dir: str):
         self.cmd.info("Running docker container...")
         with run_container(self.cmd, **self.parameters.get_section("docker")) as container:
-            copy_to(
+            copy_to_container(
                 src=requirements_path,
                 dst=f"{container.id}:/requirements.txt"
             )
@@ -122,9 +134,25 @@ class Builder:
             )
             self.cmd.info(
                 f"Coping output to {layer_output_dir}")
-            copy_from(
+            copy_from_container(
                 src=f"{container.id}:{CONTAINER_CACHE_DIR}/.",
                 dst=layer_output_dir
+            )
+
+    def _create_target(self, dir: str, target: str, exclude: None | list = None):
+        if target.endswith(".zip"):
+            create_zip_package(
+                dir=dir,
+                output=target,
+                exclude=exclude,
+                **self.parameters.get_section("zip")
+            )
+        else:
+            shutil.copytree(
+                dir,
+                target,
+                dirs_exist_ok=True,
+                ignore=shutil.ignore_patterns(*exclude) if exclude else None
             )
 
     def _build_separate_layer_on_local(self, requirements_path: str, layer_output_dir: str):
@@ -168,18 +196,17 @@ class Builder:
 
             self.cmd.info(f"Building {target}...")
             os.makedirs(os.path.dirname(target), exist_ok=True)
-            create_zip_package(
+            self._create_target(
                 dir=remove_suffix(layer_output_dir, install_dir),
-                output=target,
+                target=target,
                 exclude=[requirements_path],
-                **self.parameters.get_section("zip")
             )
             self.cmd.info(
                 f"target successfully built: {target}...")
 
     def _build_separated_function_in_container(self, package_dir: str):
         with run_container(self.cmd, **self.parameters.get_section("docker"), working_dir="/") as container:
-            copy_to(
+            copy_to_container(
                 src=f"{CURRENT_WORK_DIR}/.",
                 dst=f"{container.id}:/"
             )
@@ -200,7 +227,7 @@ class Builder:
                 f"Executing: {print_safe_cmd}")
             exec_run_container(
                 self.cmd, container, self.parameters["docker_entrypoint"], cmd)
-            copy_from(
+            copy_from_container(
                 src=f"{container.id}:{CONTAINER_CACHE_DIR}/.",
                 dst=package_dir
             )
@@ -241,10 +268,9 @@ class Builder:
 
             self.cmd.info(f"Building target: {target}")
             os.makedirs(os.path.dirname(target), exist_ok=True)
-            create_zip_package(
+            self._create_target(
                 dir=remove_suffix(package_dir, install_dir),
-                output=target,
-                **self.parameters.get_section("zip")
+                target=target,
             )
             self.cmd.info(
                 f"Target successfully built: {target}...")
@@ -253,7 +279,7 @@ class Builder:
         self.cmd.info("Running container...")
         with run_container(self.cmd, **self.parameters.get_section("docker"), working_dir="/") as container:
             self.cmd.info("Coping content")
-            copy_to(f"{CURRENT_WORK_DIR}/.", f"{container.id}:/")
+            copy_to_container(f"{CURRENT_WORK_DIR}/.", f"{container.id}:/")
 
             if self.parameters.get("pre_install_script"):
                 install_in_container_cmd_tmpl = join_cmds(
@@ -276,7 +302,7 @@ class Builder:
                 entrypoint=self.parameters["docker_entrypoint"],
                 container_cmd=cmd
             )
-            copy_from(
+            copy_from_container(
                 src=f"{container.id}:{CONTAINER_CACHE_DIR}/.",
                 dst=package_dir
             )
@@ -317,10 +343,9 @@ class Builder:
                 self._build_package_on_local(package_dir)
 
             os.makedirs(os.path.dirname(target), exist_ok=True)
-            create_zip_package(
+            self._create_target(
                 dir=remove_suffix(package_dir, install_dir),
-                output=target,
-                **self.parameters.get_section("zip")
+                target=target
             )
             self.cmd.info(
                 f"target successfully built: {target}...")
