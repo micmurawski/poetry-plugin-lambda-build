@@ -92,17 +92,18 @@ Arguments:
   docker_network_disabled    Disable networking ex. docker_network_disabled=0
   docker_network_mode        Network_mode
   docker_platform            Platform in the format os[/arch[/variant]]. Only used if the method needs to pull the requested image.
-  package_artifact_path      Output package path
-  package_install_dir        Installation directory inside zip artifact for single zip package
-  function_artifact_path     Output function package path
-  function_install_dir       Installation directory inside zip artifact for function zip package
-  layer_artifact_path        Output layer package path
-  layer_install_dir          Installation directory inside zip artifact for layer zip package
+  package_artifact_path      Output package path (default: package.zip). Set the '.zip' extension to wrap the artifact into a zip package otherwise, output will be created in the directory.
+  package_install_dir        Installation directory inside artifact for single package
+  function_artifact_path     Output function package path. Set the '.zip' extension to wrap the artifact into a zip package otherwise, output will be created in the directory.
+  function_install_dir       Installation directory inside artifact for function package
+  layer_artifact_path        Output layer package path. Set the '.zip' extension to wrap the artifact into a zip package otherwise, output will be created in the directory.
+  layer_install_dir          Installation directory inside artifact for layer package
   only                       The only dependency groups to include
   without                    The dependency groups to ignore
   with                       The optional dependency groups to include
   zip_compresslevel          None (default for the given compression type) or an integer specifying the level to pass to the compressor. When using ZIP_STORED or ZIP_LZMA this keyword has no effect. When using ZIP_DEFLATED integers 0 through 9 are accepted. When using ZIP_BZIP2 integers 1 through 9 are accepted.
   zip_compression            ZIP_STORED (no compression), ZIP_DEFLATED (requires zlib), ZIP_BZIP2 (requires bz2) or ZIP_LZMA (requires lzma)
+  pre_install_script         The script that is executed before installation.
 
 Options:
   -h, --help                 Display help for the given command. When no command is given display help for the list command.

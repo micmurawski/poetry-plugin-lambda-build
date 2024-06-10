@@ -34,7 +34,7 @@ def get_docker_client() -> docker.DockerClient:
     return docker.from_env()
 
 
-def copy_to(src: str, dst: str):
+def copy_to_container(src: str, dst: str):
     name, dst = dst.split(":")
     container = get_docker_client().containers.get(name)
 
@@ -53,7 +53,7 @@ def copy_to(src: str, dst: str):
             container.put_archive(os.path.dirname(dst), data)
 
 
-def copy_from(src: str, dst: str):
+def copy_from_container(src: str, dst: str):
     name, src = src.split(":")
     container = get_docker_client().containers.get(name)
     tar_path = dst + "_archive.tar"
