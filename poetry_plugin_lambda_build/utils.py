@@ -17,7 +17,11 @@ def parse_poetry_args(tokens: list[str]) -> Generator[tuple[str], None, None]:
         elif tokens[i].startswith("-"):
             pass
         else:
-            yield tokens[i].strip(), tokens[i+1].strip()
+            if i+1 < len(tokens):
+                snd = tokens[i+1].strip()
+            else:
+                snd = None
+            yield tokens[i].strip(), snd
             i += 1
         i += 1
 

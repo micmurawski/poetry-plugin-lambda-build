@@ -55,9 +55,10 @@ class ParametersContainer(dict):
         self.update(DEFAULT_PARAMETERS)
 
     def put(self, key: Any, value: Any) -> None:
-        self.check_key(key)
-        _parser = self.ARGS[key][-1]
-        self[key] = _parser(value)
+        if value:
+            self.check_key(key)
+            _parser = self.ARGS[key][-1]
+            self[key] = _parser(value)
 
     def check_key(self, key: Any) -> bool:
         if key not in self.ARGS:
