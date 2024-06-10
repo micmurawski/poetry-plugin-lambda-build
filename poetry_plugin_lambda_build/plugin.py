@@ -9,6 +9,7 @@ from poetry.plugins.application_plugin import ApplicationPlugin
 
 from poetry_plugin_lambda_build.parameters import ParametersContainer
 from poetry_plugin_lambda_build.recipes import Builder
+from poetry_plugin_lambda_build.utils import parse_poetry_args
 
 
 class BuildLambdaCommand(EnvCommand):
@@ -32,8 +33,7 @@ class BuildLambdaCommand(EnvCommand):
             for k in plugin_conf:
                 container.put(k, plugin_conf[k])
 
-        for token in filter(lambda token: any([token.startswith(f"{arg}=") for arg in ParametersContainer.ARGS]), self.io.input._tokens[1:]):
-            key, value = token.strip().split("=")
+        for key, value in parse_poetry_args(ParametersContainer.ARGS, self.io.input._tokens[1:]):
             container.put(key, value)
 
         return container

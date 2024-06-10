@@ -5,6 +5,15 @@ import subprocess
 import sys
 from contextlib import contextmanager
 from logging import Logger
+from typing import Generator
+
+
+def parse_poetry_args(args_map: dict[str, tuple], tokens: list[str]) -> Generator[tuple[str], None, None]:
+    for token in filter(lambda token: any([token.startswith(f"{arg}=") or token.startswith(f"{arg} ") for arg in args_map]), tokens):
+        if token.endswith("="):
+            yield token.strip().split("=")
+        elif token.endswith(" "):
+            yield token.strip().split(" ", 1)
 
 
 def join_cmds(*cmds: list[str], joiner: str = " && ") -> str:
