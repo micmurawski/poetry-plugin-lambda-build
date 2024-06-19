@@ -50,7 +50,6 @@ class ParametersContainer(dict):
         super().__init__(*args, **kwargs)
         for k, v in ARGS.items():
             self[k] = v[-2]
-        self.update(DEFAULT_PARAMETERS)
 
     def put(self, key: Any, value: Any) -> None:
         if value is not None:
