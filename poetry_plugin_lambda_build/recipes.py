@@ -336,7 +336,6 @@ class Builder:
                 CURRENT_WORK_DIR, self.parameters.get(
                     "function_artifact_path", "")
             )
-
             package_dir = os.path.join(package_dir, install_dir)
             if self.in_container:
                 self._build_separated_function_in_container(
