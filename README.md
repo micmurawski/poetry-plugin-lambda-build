@@ -82,28 +82,30 @@ Description:
   Execute to build lambda lambda artifacts
 
 Usage:
-  build-lambda [options] [--] [<docker_image> [<docker_entrypoint> [<docker_environment> [<docker_dns> [<docker_network> [<docker_network_disabled> [<docker_network_mode> [<docker_platform> [<package_install_dir> [<layer_install_dir> [<function_install_dir> [<install_dir> [<package_artifact_path> [<layer_artifact_path> [<function_artifact_path> [<only> [<without> [<with> [<zip_compresslevel> [<zip_compression>]]]]]]]]]]]]]]]]]]]]
+  build-lambda [options] [--] [<docker_image> [<docker_entrypoint> [<docker_environment> [<docker_dns> [<docker_network> [<docker_network_disabled> [<docker_network_mode> [<docker_platform> [<package_artifact_path> [<package_install_dir> [<function_artifact_path> [<function_install_dir> [<layer_artifact_path> [<layer_install_dir> [<only> [<without> [<with> [<zip_compresslevel> [<zip_compression> [<pre_install_script> [<suppress_checksum>]]]]]]]]]]]]]]]]]]]]]
+
 Arguments:
   docker_image               The image to run
-  docker_entrypoint          The entrypoint for the container (comma separated string)
+  docker_entrypoint          The entrypoint for the container (comma separated string) [default: "/bin/bash"]
   docker_environment         Environment variables to set inside the container (comma separated string) ex. VAR_1=VALUE_1,VAR_2=VALUE_2
-  docker_dns                 Set custom DNS servers (comma separated string)
+  docker_dns                 Set custom DNS servers (comma separated string) [default: "host"]
   docker_network             The name of the network this container will be connected to at creation time
   docker_network_disabled    Disable networking ex. docker_network_disabled=0
   docker_network_mode        Network_mode
   docker_platform            Platform in the format os[/arch[/variant]]. Only used if the method needs to pull the requested image.
-  package_artifact_path      Output package path (default: package.zip). Set the '.zip' extension to wrap the artifact into a zip package otherwise, output will be created in the directory.
-  package_install_dir        Installation directory inside artifact for single package
+  package_artifact_path      Output package path (default: package.zip). Set the '.zip' extension to wrap the artifact into a zip package otherwise, output will be created in the directory. [default: "package.zip"]
+  package_install_dir        Installation directory inside artifact for single package [default: ""]
   function_artifact_path     Output function package path. Set the '.zip' extension to wrap the artifact into a zip package otherwise, output will be created in the directory.
-  function_install_dir       Installation directory inside artifact for function package
+  function_install_dir       Installation directory inside artifact for function package [default: ""]
   layer_artifact_path        Output layer package path. Set the '.zip' extension to wrap the artifact into a zip package otherwise, output will be created in the directory.
-  layer_install_dir          Installation directory inside artifact for layer package
+  layer_install_dir          Installation directory inside artifact for layer package [default: ""]
   only                       The only dependency groups to include
   without                    The dependency groups to ignore
   with                       The optional dependency groups to include
   zip_compresslevel          None (default for the given compression type) or an integer specifying the level to pass to the compressor. When using ZIP_STORED or ZIP_LZMA this keyword has no effect. When using ZIP_DEFLATED integers 0 through 9 are accepted. When using ZIP_BZIP2 integers 1 through 9 are accepted.
-  zip_compression            ZIP_STORED (no compression), ZIP_DEFLATED (requires zlib), ZIP_BZIP2 (requires bz2) or ZIP_LZMA (requires lzma)
+  zip_compression            ZIP_STORED (no compression), ZIP_DEFLATED (requires zlib), ZIP_BZIP2 (requires bz2) or ZIP_LZMA (requires lzma) [default: "ZIP_STORED"]
   pre_install_script         The script that is executed before installation.
+  suppress_checksum          Enable to suppress checksum checking [default: false]
 
 Options:
   -h, --help                 Display help for the given command. When no command is given display help for the list command.

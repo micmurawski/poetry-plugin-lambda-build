@@ -87,8 +87,10 @@ def verify_checksum(param):
     def decorator(fun):
         @wraps(fun)
         def wrapper(self: Builder, *args, **kwargs):
+
             if self.parameters["suppress_checksum"]:
                 return fun(self, *args, **kwargs)
+            
             target = self.parameters[param]
             prefix = param.split("_", 1)[0]
             install_dir = self.parameters[f"{prefix}_install_dir"]
@@ -96,21 +98,21 @@ def verify_checksum(param):
             try:
                 if is_zip:
                     archive = zipfile.ZipFile(target, 'r')
-                    curr_checksum = archive.read(
+                    prev_checksum = archive.read(
                         os.path.join(install_dir, "checksum")
                     ).decode()
                 else:
-                    curr_checksum = open(os.path.join(
+                    prev_checksum = open(os.path.join(
                         target, install_dir, "checksum")).read()
             except (FileNotFoundError, KeyError):
-                curr_checksum = None
+                prev_checksum = None
 
             if prefix == "layer":
-                checksum = compute_checksum(
+                curr_checksum = compute_checksum(
                     os.path.join(CURRENT_WORK_DIR, "poetry.lock")
                 )
             elif prefix == "function":
-                checksum = compute_checksum(
+                curr_checksum = compute_checksum(
                     CURRENT_WORK_DIR,
                     exclude=[
                         os.path.join(CURRENT_WORK_DIR, target),
@@ -119,7 +121,7 @@ def verify_checksum(param):
                     ]
                 )
             else:
-                checksum = compute_checksum(
+                curr_checksum = compute_checksum(
                     CURRENT_WORK_DIR,
                     exclude=[
                         os.path.join(CURRENT_WORK_DIR, target, "*"),
@@ -127,9 +129,10 @@ def verify_checksum(param):
                     ]
                 )
             self.cmd.info("Checksum verification...")
-            self.cmd.info(f"{curr_checksum} ?= {checksum}")
+            self.cmd.info(f"Previous checksum = {prev_checksum}")
+            self.cmd.info(f"Current checksum = {curr_checksum}")
 
-            if curr_checksum == checksum:
+            if curr_checksum == prev_checksum:
                 self.cmd.info(f"No changes detected in target: {target}")
                 return
 
@@ -137,7 +140,7 @@ def verify_checksum(param):
             with TemporaryDirectory() as dir:
                 checksum_file_path = os.path.join(dir, "checksum")
                 with open(checksum_file_path, "w") as file:
-                    file.write(checksum)
+                    file.write(curr_checksum)
 
                 if is_zip:
                     with zipfile.ZipFile(target, "a") as zipf:

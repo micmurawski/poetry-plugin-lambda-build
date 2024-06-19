@@ -6,15 +6,6 @@ from poetry.console.exceptions import PoetryConsoleError
 
 from poetry_plugin_lambda_build.utils import remove_prefix
 
-DEFAULT_PARAMETERS = {
-    "docker_entrypoint": "/bin/bash",
-    "docker_network": "host",
-    "package_artifact_path": "package.zip",
-    "without": [],
-    "only": [],
-    "with": [],
-}
-
 
 def comma_separated_collection(x: str) -> list[str]: return x.split(",")
 
@@ -25,22 +16,22 @@ def str2bool(
 
 ARGS = {
     "docker_image": ("The image to run", True, False, None, str),
-    "docker_entrypoint": ("The entrypoint for the container (comma separated string)", True, False, None, str),
+    "docker_entrypoint": ("The entrypoint for the container (comma separated string)", True, False, "/bin/bash", str),
     "docker_environment": ("Environment variables to set inside the container (comma separated string) ex. VAR_1=VALUE_1,VAR_2=VALUE_2", True, False, None, str),
-    "docker_dns": ("Set custom DNS servers (comma separated string)", True, False, None, str),
+    "docker_dns": ("Set custom DNS servers (comma separated string)", True, False, "host", str),
     "docker_network": ("The name of the network this container will be connected to at creation time", True, False, None, str),
     "docker_network_disabled": ("Disable networking ex. docker_network_disabled=0", True, False, None, str),
-    "docker_network_mode": ("Network_mode", True, False, None),
+    "docker_network_mode": ("Network_mode", True, False, None, str),
     "docker_platform": ("Platform in the format os[/arch[/variant]]. Only used if the method needs to pull the requested image.", True, False, None, str),
-    "package_artifact_path": ("Output package path (default: package.zip). Set the '.zip' extension to wrap the artifact into a zip package otherwise, output will be created in the directory.", True, False, None, str),
+    "package_artifact_path": ("Output package path (default: package.zip). Set the '.zip' extension to wrap the artifact into a zip package otherwise, output will be created in the directory.", True, False, "package.zip", str),
     "package_install_dir": ("Installation directory inside artifact for single package", True, False, "", str),
     "function_artifact_path": ("Output function package path. Set the '.zip' extension to wrap the artifact into a zip package otherwise, output will be created in the directory.", True, False, None, str),
     "function_install_dir": ("Installation directory inside artifact for function package", True, False, "", str),
     "layer_artifact_path": ("Output layer package path. Set the '.zip' extension to wrap the artifact into a zip package otherwise, output will be created in the directory.", True, False, None, str),
     "layer_install_dir": ("Installation directory inside artifact for layer package", True, False, "", str),
-    "only": ("The only dependency groups to include", True, False, None, comma_separated_collection),
-    "without": ("The dependency groups to ignore", True, False, None, comma_separated_collection),
-    "with": ("The optional dependency groups to include", True, False, None, comma_separated_collection),
+    "only": ("The only dependency groups to include", True, False, [], comma_separated_collection),
+    "without": ("The dependency groups to ignore", True, False, [], comma_separated_collection),
+    "with": ("The optional dependency groups to include", True, False, [], comma_separated_collection),
     "zip_compresslevel": ("None (default for the given compression type) or an integer "
                           "specifying the level to pass to the compressor. "
                           "When using ZIP_STORED or ZIP_LZMA this keyword has no effect. "
