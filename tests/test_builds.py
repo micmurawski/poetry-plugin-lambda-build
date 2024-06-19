@@ -18,7 +18,8 @@ from tests.utils import (assert_file_exists_in_dir, assert_file_exists_in_zip,
 def env_vars():
     if platform.system() == "Darwin":
         user = os.environ["USER"]
-        os.environ["DOCKER_HOST"] = f"unix:///Users/{user}/.docker/run/docker.sock"
+        os.environ["DOCKER_HOST"] = f"unix:///Users/{
+            user}/.docker/run/docker.sock"
     yield
 
 
@@ -215,22 +216,23 @@ DIR_BUILDS_PARAMS = {
     )
 }
 
+
 @pytest.mark.parametrize("config,args,assert_files", list(ZIP_BUILDS_PARAMS.values()), ids=list(ZIP_BUILDS_PARAMS.keys()))
 def test_zip_builds(config: dict, args: dict, assert_files: list, tmp_path: Path):
     with cd(tmp_path):
         handler_file = "test_project/handler.py"
         assert run_poetry_cmd("new test-project") == 0
         with cd(tmp_path / "test-project"):
-            assert run_poetry_cmd("add requests") == 0
-            assert run_poetry_cmd("add pytest --group=test") == 0
-            assert run_poetry_cmd("self add poetry-plugin-export") == 0
+            assert run_poetry_cmd("add", "requests") == 0
+            assert run_poetry_cmd("add", "pytest", "--group=test") == 0
+            assert run_poetry_cmd("self", "add", "poetry-plugin-export") == 0
             open(handler_file, "w").close()
             if config:
                 update_pyproject_toml(
                     **config
                 )
             arguments = " ".join(f'{k}={v}' for k, v in args.items())
-            assert run_poetry_cmd(f"build-lambda {arguments} -v") == 0
+            assert run_poetry_cmd("build-lambda", arguments, "-v") == 0
             for files_assertion in assert_files:
                 files_assertion()
 
@@ -241,15 +243,15 @@ def test_dir_builds(config: dict, args: dict, assert_files: list, tmp_path: Path
         handler_file = "test_project/handler.py"
         assert run_poetry_cmd("new test-project") == 0
         with cd(tmp_path / "test-project"):
-            assert run_poetry_cmd("add requests") == 0
-            assert run_poetry_cmd("add pytest --group=test") == 0
-            assert run_poetry_cmd("self add poetry-plugin-export") == 0
+            assert run_poetry_cmd("add", "requests") == 0
+            assert run_poetry_cmd("add", "pytest", "--group=test") == 0
+            assert run_poetry_cmd("self", "add", "poetry-plugin-export") == 0
             open(handler_file, "w").close()
             if config:
                 update_pyproject_toml(
                     **config
                 )
             arguments = " ".join(f'{k}={v}' for k, v in args.items())
-            assert run_poetry_cmd(f"build-lambda {arguments} -v") == 0
+            assert run_poetry_cmd("build-lambda", arguments, "-v") == 0
             for files_assertion in assert_files:
                 files_assertion()

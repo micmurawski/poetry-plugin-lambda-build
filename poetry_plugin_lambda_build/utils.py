@@ -4,6 +4,7 @@ import os
 import subprocess
 import sys
 from contextlib import contextmanager
+
 from logging import Logger
 from typing import Generator
 from pathlib import Path
@@ -16,16 +17,13 @@ from operator import or_
 def parse_poetry_args(tokens: list[str]) -> Generator[tuple[str], None, None]:
     i = 0
     while i < len(tokens):
-        if "=" in tokens[i]:
+        if tokens[i].startswith("-") or len(tokens[i]) == 0:
+            pass
+        elif "=" in tokens[i]:
             k, v = tokens[i].strip().split("=")
             yield k, v
-        elif tokens[i].startswith("-") or len(tokens[i]) == 0:
-            pass
         else:
-            if i+1 < len(tokens):
-                val = tokens[i+1].strip()
-            else:
-                val = None
+            val = str(next(parse_poetry_args(tokens[i+1:]), ""))
             yield tokens[i].strip(), val
             i += 1
         i += 1
