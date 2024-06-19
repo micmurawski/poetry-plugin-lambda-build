@@ -16,7 +16,11 @@ DEFAULT_PARAMETERS = {
 }
 
 
-def comma_separated_collection(x): return x.split(",")
+def comma_separated_collection(x: str) -> list[str]: return x.split(",")
+
+
+def str2bool(
+    x: str) -> bool: return False if x.lower() in {"0", "false"} else True
 
 
 ARGS = {
@@ -30,7 +34,7 @@ ARGS = {
     "docker_platform": ("Platform in the format os[/arch[/variant]]. Only used if the method needs to pull the requested image.", True, False, None, str),
     "package_artifact_path": ("Output package path (default: package.zip). Set the '.zip' extension to wrap the artifact into a zip package otherwise, output will be created in the directory.", True, False, None, str),
     "package_install_dir": ("Installation directory inside artifact for single package", True, False, None, str),
-    "function_artifact_path": ("Output function package path. Set the '.zip' extension to wrap the artifact into a zip package otherwise, output will be created in the directory." , True, False, None, str),
+    "function_artifact_path": ("Output function package path. Set the '.zip' extension to wrap the artifact into a zip package otherwise, output will be created in the directory.", True, False, None, str),
     "function_install_dir": ("Installation directory inside artifact for function package", True, False, None, str),
     "layer_artifact_path": ("Output layer package path. Set the '.zip' extension to wrap the artifact into a zip package otherwise, output will be created in the directory.", True, False, None, str),
     "layer_install_dir": ("Installation directory inside artifact for layer package", True, False, None, str),
@@ -44,6 +48,7 @@ ARGS = {
                           "When using ZIP_BZIP2 integers 1 through 9 are accepted.", True, False, None, int),
     "zip_compression": ("ZIP_STORED (no compression), ZIP_DEFLATED (requires zlib), ZIP_BZIP2 (requires bz2) or ZIP_LZMA (requires lzma)", True, False, None, str),
     "pre_install_script": ("The script that is executed before installation.", True, False, None, str),
+    "suppress_checksum": ("Enable to suppress checksum checking", True, False, False, str2bool),
 }
 
 
@@ -52,6 +57,8 @@ class ParametersContainer(dict):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        for k, v in ARGS.items():
+            self[k] = v[-2]
         self.update(DEFAULT_PARAMETERS)
 
     def put(self, key: Any, value: Any) -> None:

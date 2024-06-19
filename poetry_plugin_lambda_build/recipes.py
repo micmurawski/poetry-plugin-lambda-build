@@ -1,4 +1,5 @@
 from __future__ import annotations
+from functools import wraps
 
 import enum
 import os
@@ -31,6 +32,9 @@ from poetry_plugin_lambda_build.utils import (
 )
 from poetry_plugin_lambda_build.zip import create_zip_package
 import shutil
+from .utils import compute_checksum
+import zipfile
+
 
 CONTAINER_CACHE_DIR = "/opt/lambda/cache"
 CURRENT_WORK_DIR = os.getcwd()
@@ -77,6 +81,78 @@ def get_indexes(cmd: Command, parameters: ParametersContainer) -> str:
         io=cmd.io,
         groups=parameters.groups
     ).export_indexes()
+
+
+def verify_checksum(param):
+    def decorator(fun):
+        @wraps(fun)
+        def wrapper(self: Builder, *args, **kwargs):
+            if self.parameters["suppress_checksum"]:
+                return fun(self, *args, **kwargs)
+            target = self.parameters[param]
+            prefix = param.split("_", 1)[0]
+            install_dir = self.parameters[f"{prefix}_install_dir"]
+            is_zip = target.endswith(".zip")
+            try:
+                if is_zip:
+                    archive = zipfile.ZipFile(target, 'r')
+                    curr_checksum = archive.read(
+                        os.path.join(install_dir, "checksum")
+                    ).decode()
+                else:
+                    curr_checksum = open(os.path.join(
+                        target, install_dir, "checksum")).read()
+            except (FileNotFoundError, KeyError):
+                curr_checksum = None
+
+            if prefix == "layer":
+                checksum = compute_checksum(
+                    os.path.join(CURRENT_WORK_DIR, "poetry.lock")
+                )
+            elif prefix == "function":
+                checksum = compute_checksum(
+                    CURRENT_WORK_DIR,
+                    exclude=[
+                        os.path.join(CURRENT_WORK_DIR, target),
+                        os.path.join(CURRENT_WORK_DIR, target, "*"),
+                        os.path.join(CURRENT_WORK_DIR, "poetry.lock")
+                    ]
+                )
+            else:
+                checksum = compute_checksum(
+                    CURRENT_WORK_DIR,
+                    exclude=[
+                        os.path.join(CURRENT_WORK_DIR, target, "*"),
+                        os.path.join(CURRENT_WORK_DIR, target),
+                    ]
+                )
+            self.cmd.info("Checksum verification...")
+            self.cmd.info(f"{curr_checksum} ?= {checksum}")
+
+            if curr_checksum == checksum:
+                self.cmd.info(f"No changes detected in target: {target}")
+                return
+
+            retval = fun(self, *args, **kwargs)
+            with TemporaryDirectory() as dir:
+                checksum_file_path = os.path.join(dir, "checksum")
+                with open(checksum_file_path, "w") as file:
+                    file.write(checksum)
+
+                if is_zip:
+                    with zipfile.ZipFile(target, "a") as zipf:
+                        zipf.write(
+                            checksum_file_path,
+                            os.path.join(install_dir, "checksum")
+                        )
+                else:
+                    shutil.copyfile(checksum_file_path, os.path.join(
+                        CURRENT_WORK_DIR, target, install_dir, "checksum")
+                    )
+
+            return retval
+        return wrapper
+    return decorator
 
 
 class Builder:
@@ -165,6 +241,7 @@ class Builder:
         self.cmd.info(f"Executing: {print_safe_cmd}")
         run_python_cmd("-m", cmd)
 
+    @verify_checksum("layer_artifact_path")
     def build_separate_layer_package(self):
         self.cmd.info("Building separate layer package...")
         with TemporaryDirectory() as tmp_dir:
@@ -249,6 +326,7 @@ class Builder:
         self.cmd.debug(f"Executing: {print_safe_cmd}")
         run_python_cmd("-m", cmd, logger=self.cmd)
 
+    @verify_checksum("function_artifact_path")
     def build_separated_function_package(self):
         self.cmd.info("Building function package...")
         with TemporaryDirectory() as tmp_dir:
@@ -326,6 +404,7 @@ class Builder:
             f"Executing: {print_safe_cmd}")
         run_python_cmd("-m", cmd, logger=self.cmd)
 
+    @verify_checksum("package_artifact_path")
     def build_package(self):
         self.cmd.info("Building package...")
         with TemporaryDirectory() as package_dir:
