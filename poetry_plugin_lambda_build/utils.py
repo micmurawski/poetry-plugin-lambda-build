@@ -4,7 +4,13 @@ import os
 import subprocess
 import sys
 from contextlib import contextmanager
+
 from logging import Logger
+from pathlib import Path
+import hashlib
+from fnmatch import fnmatch
+from functools import reduce
+from operator import or_
 
 
 def join_cmds(*cmds: list[str], joiner: str = " && ") -> str:
@@ -87,3 +93,22 @@ def format_str(string: str, **kwargs) -> str:
         if pattern in string:
             string = string.replace(pattern, v)
     return string
+
+
+def compute_checksum(path: str | Path, exclude: None | list[str | Path] = None) -> str:
+    m = hashlib.md5()
+
+    if exclude is None:
+        exclude = []
+    if os.path.isdir(path):
+        for root, _, files in os.walk(path):
+            for file_read in files:
+                full_path = os.path.join(root, file_read)
+                if not reduce(
+                    or_, [fnmatch(full_path, pattern)
+                          for pattern in exclude], False
+                ):
+                    m.update(str(os.stat(full_path)).encode())
+    else:
+        m.update(str(os.stat(path)).encode())
+    return m.hexdigest()

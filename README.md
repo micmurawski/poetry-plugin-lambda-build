@@ -18,11 +18,11 @@ Configure `pyproject.toml` with the following configuration. This is example for
 
 ```.toml
 [tool.poetry-plugin-lambda-build]
-docker_image = "public.ecr.aws/sam/build-python3.11:latest-x86_64"
-docker_network = "host"
-layer_artifact_path = "artifacts/layer.zip"
-layer_install_dir = "python"
-function_artifact_path = "artifacts/function.zip"
+docker-image = "public.ecr.aws/sam/build-python3.11:latest-x86_64"
+docker-network = "host"
+layer-artifact_path = "artifacts/layer.zip"
+layer-install-dir = "python"
+function-artifact-path = "artifacts/function.zip"
 ```
 
 Running ...
@@ -38,37 +38,45 @@ artifacts
 └── layer.zip
 ```
 
+Running ...
+
+```bash
+poetry build-lambda docker-image="public.ecr.aws/sam/build-python3.12:latest-x86_64"
+```
+
+will override `docker-image` value in config 
+
 ## Configuration Examples
 ### AWS Lambda - all in one - dependencies and function in the same zip package - Default
 
 ```.toml
 [tool.poetry-plugin-lambda-build]
-artifact_path = "package.zip"
+artifact-path = "package.zip"
 ```
 
 ### AWS Lambda - all in one - layer package
 ```.toml
 [tool.poetry-plugin-lambda-build]
-package_install_dir = "python"
-package_artifact_path = "layer.zip"
+package-install-dir = "python"
+package-artifact-path = "layer.zip"
 ```
 ### AWS Lambda - separated - separate layer package and function package
 
 ```.toml
 [tool.poetry-plugin-lambda-build]
-layer_artifact_path = "layer.zip"
-layer_install_dir = "python"
-function_artifact_path = "function.zip"
+layer-artifact-path = "layer.zip"
+layer-install-dir = "python"
+function-artifact-path = "function.zip"
 ```
 ### <a name="aws"></a>AWS Lambda - separated - separate layer package and function package build in docker container
 
 ```.toml
 [tool.poetry-plugin-lambda-build]
-docker_image = "public.ecr.aws/sam/build-python3.11:latest-x86_64"
-docker_network = "host"
-layer_artifact_path = "layer.zip"
-layer_install_dir = "python"
-function_artifact_path = "function.zip"
+docker-image = "public.ecr.aws/sam/build-python3.11:latest-x86_64"
+docker-network = "host"
+layer-artifact-path = "layer.zip"
+layer-install-dir = "python"
+function-artifact-path = "function.zip"
 ```
 
 ## Help
@@ -82,30 +90,32 @@ Description:
   Execute to build lambda lambda artifacts
 
 Usage:
-  build-lambda [options] [--] [<docker_image> [<docker_entrypoint> [<docker_environment> [<docker_dns> [<docker_network> [<docker_network_disabled> [<docker_network_mode> [<docker_platform> [<package_install_dir> [<layer_install_dir> [<function_install_dir> [<install_dir> [<package_artifact_path> [<layer_artifact_path> [<function_artifact_path> [<only> [<without> [<with> [<zip_compresslevel> [<zip_compression>]]]]]]]]]]]]]]]]]]]]
+  build-lambda [options] [--] [<docker-image> [<docker-entrypoint> [<docker-environment> [<docker-dns> [<docker-network> [<docker-network-disabled> [<docker-network-mode> [<docker-platform> [<package-artifact-path> [<package-install-dir> [<function-artifact-path> [<function-install-dir> [<layer-artifact-path> [<layer-install-dir> [<only> [<without> [<with> [<zip-compresslevel> [<zip-compression> [<pre-install-script>]]]]]]]]]]]]]]]]]]]]
+
 Arguments:
-  docker_image               The image to run
-  docker_entrypoint          The entrypoint for the container (comma separated string)
-  docker_environment         Environment variables to set inside the container (comma separated string) ex. VAR_1=VALUE_1,VAR_2=VALUE_2
-  docker_dns                 Set custom DNS servers (comma separated string)
-  docker_network             The name of the network this container will be connected to at creation time
-  docker_network_disabled    Disable networking ex. docker_network_disabled=0
-  docker_network_mode        Network_mode
-  docker_platform            Platform in the format os[/arch[/variant]]. Only used if the method needs to pull the requested image.
-  package_artifact_path      Output package path (default: package.zip). Set the '.zip' extension to wrap the artifact into a zip package otherwise, output will be created in the directory.
-  package_install_dir        Installation directory inside artifact for single package
-  function_artifact_path     Output function package path. Set the '.zip' extension to wrap the artifact into a zip package otherwise, output will be created in the directory.
-  function_install_dir       Installation directory inside artifact for function package
-  layer_artifact_path        Output layer package path. Set the '.zip' extension to wrap the artifact into a zip package otherwise, output will be created in the directory.
-  layer_install_dir          Installation directory inside artifact for layer package
+  docker-image               The image to run
+  docker-entrypoint          The entrypoint for the container (comma separated string) [default: "/bin/bash"]
+  docker-environment         Environment variables to set inside the container (comma separated string) ex. VAR_1=VALUE_1,VAR_2=VALUE_2
+  docker-dns                 Set custom DNS servers (comma separated string)
+  docker-network             The name of the network this container will be connected to at creation time [default: "host"]
+  docker-network-disabled    Disable networking ex. docker-network-disabled=0
+  docker-network-mode        Network-mode
+  docker-platform            Platform in the format os[/arch[/variant]]. Only used if the method needs to pull the requested image.
+  package-artifact-path      Output package path (default: package.zip). Set the '.zip' extension to wrap the artifact into a zip package otherwise, output will be created in the directory. [default: "package.zip"]
+  package-install-dir        Installation directory inside artifact for single package [default: ""]
+  function-artifact-path     Output function package path. Set the '.zip' extension to wrap the artifact into a zip package otherwise, output will be created in the directory.
+  function-install-dir       Installation directory inside artifact for function package [default: ""]
+  layer-artifact-path        Output layer package path. Set the '.zip' extension to wrap the artifact into a zip package otherwise, output will be created in the directory.
+  layer-install-dir          Installation directory inside artifact for layer package [default: ""]
   only                       The only dependency groups to include
   without                    The dependency groups to ignore
   with                       The optional dependency groups to include
-  zip_compresslevel          None (default for the given compression type) or an integer specifying the level to pass to the compressor. When using ZIP_STORED or ZIP_LZMA this keyword has no effect. When using ZIP_DEFLATED integers 0 through 9 are accepted. When using ZIP_BZIP2 integers 1 through 9 are accepted.
-  zip_compression            ZIP_STORED (no compression), ZIP_DEFLATED (requires zlib), ZIP_BZIP2 (requires bz2) or ZIP_LZMA (requires lzma)
-  pre_install_script         The script that is executed before installation.
+  zip-compresslevel          None (default for the given compression type) or an integer specifying the level to pass to the compressor. When using ZIP_STORED or ZIP_LZMA this keyword has no effect. When using ZIP_DEFLATED integers 0 through 9 are accepted. When using ZIP_BZIP2 integers 1 through 9 are accepted.
+  zip-compression            ZIP_STORED (no compression), ZIP_DEFLATED (requires zlib), ZIP_BZIP2 (requires bz2) or ZIP_LZMA (requires lzma) [default: "ZIP_STORED"]
+  pre-install-script         The script that is executed before installation.
 
 Options:
+      --no-checksum          Enable to suppress checksum checking
   -h, --help                 Display help for the given command. When no command is given display help for the list command.
   -q, --quiet                Do not output any message.
   -V, --version              Display this application version.
