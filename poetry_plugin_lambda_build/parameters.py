@@ -95,9 +95,6 @@ class ParametersContainer(dict):
 
                 if self.is_in_opts(token[2:]):
                     yield token[2:], True
-                elif self.is_in_args(token[2:]):
-                    token = token[2:]
-                    continue
 
             elif tokens[i].startswith("-") or len(tokens[i]) == 0:
                 pass
