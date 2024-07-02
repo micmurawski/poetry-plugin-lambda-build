@@ -52,9 +52,9 @@ class BuildType(enum.Enum):
 
     @classmethod
     def get_type(cls, parameters: dict):
-        layer = parameters.get("layer_artifact_path")
-        function = parameters.get("function_artifact_path")
-        container_img = parameters.get("docker_image")
+        layer = parameters.get("layer-artifact-path")
+        function = parameters.get("function-artifact-path")
+        container_img = parameters.get("docker-image")
         if container_img:
             if layer and function:
                 return cls.IN_CONTAINER_SEPARATED
@@ -88,12 +88,12 @@ def verify_checksum(param):
         @wraps(fun)
         def wrapper(self: Builder, *args, **kwargs):
 
-            if self.parameters["suppress_checksum"]:
+            if self.parameters["no-checksum"]:
                 return fun(self, *args, **kwargs)
             
             target = self.parameters[param]
-            prefix = param.split("_", 1)[0]
-            install_dir = self.parameters[f"{prefix}_install_dir"]
+            prefix = param.split("-", 1)[0]
+            install_dir = self.parameters[f"{prefix}-install-dir"]
             is_zip = target.endswith(".zip")
             try:
                 if is_zip:
@@ -190,7 +190,7 @@ class Builder:
             )
             self.cmd.info("Installing requirements")
 
-            if self.parameters.get("pre_install_script"):
+            if self.parameters.get("pre-install-script"):
                 install_deps_cmd_in_container_tmpl = join_cmds(
                     self.parameters.get("pre_install_script"),
                     INSTALL_DEPS_CMD_IN_CONTAINER_TMPL
@@ -208,7 +208,7 @@ class Builder:
             exec_run_container(
                 logger=self.cmd,
                 container=container,
-                entrypoint=self.parameters["docker_entrypoint"],
+                entrypoint=self.parameters["docker-entrypoint"],
                 container_cmd=cmd,
             )
             self.cmd.info(
@@ -244,15 +244,15 @@ class Builder:
         self.cmd.info(f"Executing: {print_safe_cmd}")
         run_python_cmd("-m", cmd)
 
-    @verify_checksum("layer_artifact_path")
+    @verify_checksum("layer-artifact-path")
     def build_separate_layer_package(self):
         self.cmd.info("Building separate layer package...")
         with TemporaryDirectory() as tmp_dir:
-            install_dir = self.parameters.get("layer_install_dir", "")
-            layer_output_dir = os.path.join(tmp_dir, "layer_output")
+            install_dir = self.parameters.get("layer-install-dir", "")
+            layer_output_dir = os.path.join(tmp_dir, "layer-output")
             target = os.path.join(
                 CURRENT_WORK_DIR, self.parameters.get(
-                    "layer_artifact_path", "")
+                    "layer-artifact-path", "")
             )
             requirements_path = os.path.join(tmp_dir, "requirements.txt")
             layer_output_dir = os.path.join(layer_output_dir, install_dir)
@@ -290,9 +290,9 @@ class Builder:
                 src=f"{CURRENT_WORK_DIR}/.",
                 dst=f"{container.id}:/"
             )
-            if self.parameters.get("pre_install_script"):
+            if self.parameters.get("pre-install-script"):
                 install_in_container_no_deps_cmd_tmpl = join_cmds(
-                    self.parameters.get("pre_install_script"),
+                    self.parameters.get("pre-install-script"),
                     INSTALL_IN_CONTAINER_NO_DEPS_CMD_TMPL
                 )
             else:
@@ -306,7 +306,7 @@ class Builder:
             self.cmd.info(
                 f"Executing: {print_safe_cmd}")
             exec_run_container(
-                self.cmd, container, self.parameters["docker_entrypoint"], cmd)
+                self.cmd, container, self.parameters["docker-entrypoint"], cmd)
             copy_from_container(
                 src=f"{container.id}:{CONTAINER_CACHE_DIR}/.",
                 dst=package_dir
@@ -315,9 +315,9 @@ class Builder:
     def _build_separated_function_on_local(self, package_dir: str):
         os.makedirs(package_dir, exist_ok=True)
 
-        if self.parameters.get("pre_install_script"):
+        if self.parameters.get("pre-install-script"):
             install_no_deps_cmd_tmpl = join_cmds(
-                self.parameters.get("pre_install_script"),
+                self.parameters.get("pre-install-script"),
                 INSTALL_NO_DEPS_CMD_TMPL
             )
         else:
@@ -329,15 +329,15 @@ class Builder:
         self.cmd.debug(f"Executing: {print_safe_cmd}")
         run_python_cmd("-m", cmd, logger=self.cmd)
 
-    @verify_checksum("function_artifact_path")
+    @verify_checksum("function-artifact-path")
     def build_separated_function_package(self):
         self.cmd.info("Building function package...")
         with TemporaryDirectory() as tmp_dir:
-            install_dir = self.parameters.get("function_install_dir", "")
+            install_dir = self.parameters.get("function-install-dir", "")
             package_dir = tmp_dir
             target = os.path.join(
                 CURRENT_WORK_DIR, self.parameters.get(
-                    "function_artifact_path", "")
+                    "function-artifact-path", "")
             )
             package_dir = os.path.join(package_dir, install_dir)
             if self.in_container:
@@ -361,9 +361,9 @@ class Builder:
             self.cmd.info("Coping content")
             copy_to_container(f"{CURRENT_WORK_DIR}/.", f"{container.id}:/")
 
-            if self.parameters.get("pre_install_script"):
+            if self.parameters.get("pre-install-script"):
                 install_in_container_cmd_tmpl = join_cmds(
-                    self.parameters.get("pre_install_script"),
+                    self.parameters.get("pre-install-script"),
                     INSTALL_IN_CONTAINER_CMD_TMPL
                 )
             else:
@@ -379,7 +379,7 @@ class Builder:
             exec_run_container(
                 logger=self.cmd,
                 container=container,
-                entrypoint=self.parameters["docker_entrypoint"],
+                entrypoint=self.parameters["docker-entrypoint"],
                 container_cmd=cmd
             )
             copy_from_container(
@@ -390,9 +390,9 @@ class Builder:
     def _build_package_on_local(self, package_dir: str):
         self.cmd.info("Building package on local")
 
-        if self.parameters.get("pre_install_script"):
+        if self.parameters.get("pre-install-script"):
             install_cmd_tmpl = join_cmds(
-                self.parameters.get("pre_install_script"),
+                self.parameters.get("pre-install-script"),
                 INSTALL_CMD_TMPL
             )
         else:
@@ -406,16 +406,16 @@ class Builder:
             f"Executing: {print_safe_cmd}")
         run_python_cmd("-m", cmd, logger=self.cmd)
 
-    @verify_checksum("package_artifact_path")
+    @verify_checksum("package-artifact-path")
     def build_package(self):
         self.cmd.info("Building package...")
         with TemporaryDirectory() as package_dir:
-            install_dir = self.parameters.get("package_install_dir", "")
+            install_dir = self.parameters.get("package-install-dir", "")
             package_dir = os.path.join(package_dir, install_dir)
             os.makedirs(package_dir, exist_ok=True)
             target = os.path.join(
                 CURRENT_WORK_DIR, self.parameters.get(
-                    "package_artifact_path", "")
+                    "package-artifact-path", "")
             )
 
             if self.in_container:

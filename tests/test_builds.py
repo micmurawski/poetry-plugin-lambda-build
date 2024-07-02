@@ -29,10 +29,10 @@ DOCKER_IMG = f"public.ecr.aws/sam/build-python{PYTHON_VER}:latest-x86_64"
 ZIP_BUILDS_PARAMS = {
     "layer function separated in container": (
         {
-            "docker_image": DOCKER_IMG,
-            "layer_install_dir": "python",
-            "layer_artifact_path": "layer.zip",
-            "function_artifact_path": "function.zip"
+            "docker-image": DOCKER_IMG,
+            "layer-install-dir": "python",
+            "layer-artifact-path": "layer.zip",
+            "function-artifact-path": "function.zip"
         },
         {},
         [
@@ -49,9 +49,9 @@ ZIP_BUILDS_PARAMS = {
     ),
     "layer function separated on local": (
         {
-            "layer_install_dir": "python",
-            "layer_artifact_path": "layer.zip",
-            "function_artifact_path": "function.zip"
+            "layer-install-dir": "python",
+            "layer-artifact-path": "layer.zip",
+            "function-artifact-path": "function.zip"
         },
         {},
         [
@@ -68,8 +68,8 @@ ZIP_BUILDS_PARAMS = {
     ),
     "all in one on local": (
         {
-            "package_artifact_path": "function.zip",
-            "package_install_dir": "python"
+            "package-artifact-path": "function.zip",
+            "package-install-dir": "python"
         },
         {},
         [
@@ -85,11 +85,11 @@ ZIP_BUILDS_PARAMS = {
     ),
     "all in one, docker img provided in cli": (
         {
-            "package_artifact_path": "function.zip",
-            "package_install_dir": "python"
+            "package-artifact-path": "function.zip",
+            "package-install-dir": "python"
         },
         {
-            "docker_image": DOCKER_IMG,
+            "docker-image": DOCKER_IMG,
         },
         [
             lambda: assert_file_exists_in_zip(
@@ -104,7 +104,7 @@ ZIP_BUILDS_PARAMS = {
     ),
     "all in one, without dev": (
         {
-            "package_artifact_path": "function.zip",
+            "package-artifact-path": "function.zip",
             "without": "test"
         },
         {},
@@ -124,10 +124,10 @@ ZIP_BUILDS_PARAMS = {
 DIR_BUILDS_PARAMS = {
     "layer function separated in container": (
         {
-            "docker_image": DOCKER_IMG,
-            "layer_install_dir": "python",
-            "layer_artifact_path": "layer",
-            "function_artifact_path": "function"
+            "docker-image": DOCKER_IMG,
+            "layer-install-dir": "python",
+            "layer-artifact-path": "layer",
+            "function-artifact-path": "function"
         },
         {},
         [
@@ -144,9 +144,9 @@ DIR_BUILDS_PARAMS = {
     ),
     "layer function separated on local": (
         {
-            "layer_install_dir": "python",
-            "layer_artifact_path": "layer",
-            "function_artifact_path": "function"
+            "layer-install-dir": "python",
+            "layer-artifact-path": "layer",
+            "function-artifact-path": "function"
         },
         {},
         [
@@ -163,8 +163,8 @@ DIR_BUILDS_PARAMS = {
     ),
     "all in one on local": (
         {
-            "package_artifact_path": "function",
-            "package_install_dir": "python"
+            "package-artifact-path": "function",
+            "package-install-dir": "python"
         },
         {},
         [
@@ -180,11 +180,11 @@ DIR_BUILDS_PARAMS = {
     ),
     "all in one, docker img provided in cli": (
         {
-            "package_artifact_path": "function",
-            "package_install_dir": "python"
+            "package-artifact-path": "function",
+            "package-install-dir": "python"
         },
         {
-            "docker_image": DOCKER_IMG,
+            "docker-image": DOCKER_IMG,
         },
         [
             lambda: assert_file_exists_in_dir(
@@ -199,7 +199,7 @@ DIR_BUILDS_PARAMS = {
     ),
     "all in one, without dev": (
         {
-            "package_artifact_path": "function",
+            "package-artifact-path": "function",
             "without": "test"
         },
         {},
@@ -225,7 +225,6 @@ def test_zip_builds(config: dict, args: dict, assert_files: list, tmp_path: Path
         with cd(tmp_path / "test-project"):
             assert run_poetry_cmd("add", "requests") == 0
             assert run_poetry_cmd("add", "pytest", "--group=test") == 0
-            assert run_poetry_cmd("self", "add", "poetry-plugin-export") == 0
             open(handler_file, "w").close()
             if config:
                 update_pyproject_toml(
@@ -245,7 +244,6 @@ def test_dir_builds(config: dict, args: dict, assert_files: list, tmp_path: Path
         with cd(tmp_path / "test-project"):
             assert run_poetry_cmd("add", "requests") == 0
             assert run_poetry_cmd("add", "pytest", "--group=test") == 0
-            assert run_poetry_cmd("self", "add", "poetry-plugin-export") == 0
             open(handler_file, "w").close()
             if config:
                 update_pyproject_toml(

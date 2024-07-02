@@ -6,27 +6,11 @@ import sys
 from contextlib import contextmanager
 
 from logging import Logger
-from typing import Generator
 from pathlib import Path
 import hashlib
 from fnmatch import fnmatch
 from functools import reduce
 from operator import or_
-
-
-def parse_poetry_args(tokens: list[str]) -> Generator[tuple[str], None, None]:
-    i = 0
-    while i < len(tokens):
-        if tokens[i].startswith("-") or len(tokens[i]) == 0:
-            pass
-        elif "=" in tokens[i]:
-            k, v = tokens[i].strip().split("=")
-            yield k, v
-        else:
-            val = str(next(parse_poetry_args(tokens[i+1:]), ""))
-            yield tokens[i].strip(), val
-            i += 1
-        i += 1
 
 
 def join_cmds(*cmds: list[str], joiner: str = " && ") -> str:
