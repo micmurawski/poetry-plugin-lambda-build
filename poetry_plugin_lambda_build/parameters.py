@@ -16,7 +16,6 @@ ARGS = {
     "docker-environment": ("Environment variables to set inside the container (comma separated string) ex. VAR_1=VALUE_1,VAR_2=VALUE_2", True, False, None, str),
     "docker-dns": ("Set custom DNS servers (comma separated string)", True, False, None, str),
     "docker-network": ("The name of the network this container will be connected to at creation time", True, False, "host", str),
-    "docker-network-disabled": ("Disable networking ex. docker-network-disabled=0", True, False, None, str),
     "docker-network-mode": ("Network-mode", True, False, None, str),
     "docker-platform": ("Platform in the format os[/arch[/variant]]. Only used if the method needs to pull the requested image.", True, False, None, str),
     "package-artifact-path": ("Output package path (default: package.zip). Set the '.zip' extension to wrap the artifact into a zip package otherwise, output will be created in the directory.", True, False, "package.zip", str),
@@ -39,7 +38,8 @@ ARGS = {
 
 
 OPTS = {
-    "no-checksum": ("Enable to suppress checksum checking", True, False, False, bool)
+    "no-checksum": ("Enable to suppress checksum checking", True, False, False, bool),
+    "docker-network-disabled": ("Disable networking", True, False, None, bool),
 }
 
 
@@ -79,7 +79,7 @@ class ParametersContainer(dict):
         return super().__getitem__(key)
 
     def get_section(self, section: str) -> dict:
-        return {remove_prefix(k, section+"-"): self[k] for k in self if k.startswith(section)}
+        return {remove_prefix(k, section+"-").replace("-", "_"): self[k] for k in self if k.startswith(section)}
 
     @property
     def groups(self) -> dict:

@@ -18,11 +18,11 @@ Configure `pyproject.toml` with the following configuration. This is example for
 
 ```.toml
 [tool.poetry-plugin-lambda-build]
-docker_image = "public.ecr.aws/sam/build-python3.11:latest-x86_64"
-docker_network = "host"
-layer_artifact_path = "artifacts/layer.zip"
-layer_install_dir = "python"
-function_artifact_path = "artifacts/function.zip"
+docker-image = "public.ecr.aws/sam/build-python3.11:latest-x86_64"
+docker-network = "host"
+layer-artifact_path = "artifacts/layer.zip"
+layer-install-dir = "python"
+function-artifact-path = "artifacts/function.zip"
 ```
 
 Running ...
@@ -41,42 +41,42 @@ artifacts
 Running ...
 
 ```bash
-poetry build-lambda docker_image="public.ecr.aws/sam/build-python3.12:latest-x86_64"
+poetry build-lambda docker-image="public.ecr.aws/sam/build-python3.12:latest-x86_64"
 ```
 
-will override `docker_image` value in config 
+will override `docker-image` value in config 
 
 ## Configuration Examples
 ### AWS Lambda - all in one - dependencies and function in the same zip package - Default
 
 ```.toml
 [tool.poetry-plugin-lambda-build]
-artifact_path = "package.zip"
+artifact-path = "package.zip"
 ```
 
 ### AWS Lambda - all in one - layer package
 ```.toml
 [tool.poetry-plugin-lambda-build]
-package_install_dir = "python"
-package_artifact_path = "layer.zip"
+package-install-dir = "python"
+package-artifact-path = "layer.zip"
 ```
 ### AWS Lambda - separated - separate layer package and function package
 
 ```.toml
 [tool.poetry-plugin-lambda-build]
-layer_artifact_path = "layer.zip"
-layer_install_dir = "python"
-function_artifact_path = "function.zip"
+layer-artifact-path = "layer.zip"
+layer-install-dir = "python"
+function-artifact-path = "function.zip"
 ```
 ### <a name="aws"></a>AWS Lambda - separated - separate layer package and function package build in docker container
 
 ```.toml
 [tool.poetry-plugin-lambda-build]
-docker_image = "public.ecr.aws/sam/build-python3.11:latest-x86_64"
-docker_network = "host"
-layer_artifact_path = "layer.zip"
-layer_install_dir = "python"
-function_artifact_path = "function.zip"
+docker-image = "public.ecr.aws/sam/build-python3.11:latest-x86_64"
+docker-network = "host"
+layer-artifact-path = "layer.zip"
+layer-install-dir = "python"
+function-artifact-path = "function.zip"
 ```
 
 ## Help

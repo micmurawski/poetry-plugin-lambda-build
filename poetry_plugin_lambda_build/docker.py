@@ -12,12 +12,6 @@ from docker.models.containers import Container
 from poetry_plugin_lambda_build.utils import cd
 
 
-def _parse_str_to_bool(value: str) -> bool:
-    if value.lower() in ("0", "false"):
-        return False
-    return True
-
-
 def _parse_str_to_list(value: str) -> list[str]:
     return value.split(",")
 
@@ -26,7 +20,7 @@ ARGS_PARSERS = {
     "environment": _parse_str_to_list,
     "dns": _parse_str_to_list,
     "entrypoint": _parse_str_to_list,
-    "network_disabled": _parse_str_to_bool
+    "network_disabled": bool
 }
 
 
@@ -71,12 +65,11 @@ def copy_from_container(src: str, dst: str):
 @contextmanager
 def run_container(logger, **kwargs) -> Generator[Container, None, None]:
     image: str = kwargs.pop("image")
-    kwargs: dict = {k.replace("-", "_"): v for k, v in kwargs.items() if v}
 
-    for arg in ARGS_PARSERS:
-        if arg in kwargs:
-            parser = ARGS_PARSERS[arg]
-            kwargs[arg] = parser(kwargs[arg])
+    for k, v in kwargs.items():
+        if k in ARGS_PARSERS and v:
+            parser = ARGS_PARSERS[k]
+            kwargs[k] = parser(v)
 
     docker_container: Container = get_docker_client().containers.run(
         image, **kwargs, tty=True, detach=True
