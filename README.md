@@ -51,7 +51,7 @@ will override `docker-image` value in config
 
 ```.toml
 [tool.poetry-plugin-lambda-build]
-artifact-path = "package.zip"
+package-artifact-path = "package.zip"
 ```
 
 ### AWS Lambda - all in one - layer package
@@ -90,7 +90,7 @@ Description:
   Execute to build lambda lambda artifacts
 
 Usage:
-  build-lambda [options] [--] [<docker-image> [<docker-entrypoint> [<docker-environment> [<docker-dns> [<docker-network> [<docker-network-disabled> [<docker-network-mode> [<docker-platform> [<package-artifact-path> [<package-install-dir> [<function-artifact-path> [<function-install-dir> [<layer-artifact-path> [<layer-install-dir> [<only> [<without> [<with> [<zip-compresslevel> [<zip-compression> [<pre-install-script>]]]]]]]]]]]]]]]]]]]]
+  build-lambda [options] [--] [<docker-image> [<docker-entrypoint> [<docker-environment> [<docker-dns> [<docker-network> [<docker-network-mode> [<docker-platform> [<package-artifact-path> [<package-install-dir> [<function-artifact-path> [<function-install-dir> [<layer-artifact-path> [<layer-install-dir> [<only> [<without> [<with> [<zip-compresslevel> [<zip-compression> [<pre-install-script>]]]]]]]]]]]]]]]]]]]
 
 Arguments:
   docker-image               The image to run
@@ -98,7 +98,6 @@ Arguments:
   docker-environment         Environment variables to set inside the container (comma separated string) ex. VAR_1=VALUE_1,VAR_2=VALUE_2
   docker-dns                 Set custom DNS servers (comma separated string)
   docker-network             The name of the network this container will be connected to at creation time [default: "host"]
-  docker-network-disabled    Disable networking ex. docker-network-disabled=0
   docker-network-mode        Network-mode
   docker-platform            Platform in the format os[/arch[/variant]]. Only used if the method needs to pull the requested image.
   package-artifact-path      Output package path (default: package.zip). Set the '.zip' extension to wrap the artifact into a zip package otherwise, output will be created in the directory. [default: "package.zip"]
@@ -115,7 +114,8 @@ Arguments:
   pre-install-script         The script that is executed before installation.
 
 Options:
-      --no-checksum          Enable to suppress checksum checking
+      --no-checksum              Enable to suppress checksum checking
+      --docker-network-disabled  Disable networking
   -h, --help                 Display help for the given command. When no command is given display help for the list command.
   -q, --quiet                Do not output any message.
   -V, --version              Display this application version.
