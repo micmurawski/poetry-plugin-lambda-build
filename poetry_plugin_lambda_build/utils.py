@@ -56,11 +56,8 @@ def run_cmd(
     stderr: int = subprocess.PIPE,
     **kwargs
 ) -> int:
-    cmd = []
-    for a in args:
-        cmd += a.split(" ")
     process = subprocess.Popen(
-        cmd,
+        args,
         stdout=stdout,
         stderr=stderr,
         **kwargs
