@@ -13,7 +13,7 @@ from functools import reduce
 from operator import or_
 
 
-def join_cmds(*cmds: list[list[str]], joiner: str = " && ") -> list[str]:
+def join_cmds(*cmds: list[list[str]], joiner: str = "&&") -> list[str]:
     result = []
     for i, cmd in enumerate(cmds):
         result += cmd
