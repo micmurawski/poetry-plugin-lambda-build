@@ -75,7 +75,7 @@ def get_requirements(cmd: Command, parameters: ParametersContainer) -> str:
     ).export()
 
 
-def get_indexes(cmd: Command, parameters: ParametersContainer) -> str:
+def get_indexes(cmd: Command, parameters: ParametersContainer) -> list[str]:
     return RequirementsExporter(
         poetry=cmd.poetry,
         io=cmd.io,
@@ -169,16 +169,18 @@ class Builder:
             self.in_container = False
 
     def format_cmd(self, string: str, **kwargs) -> tuple[list[str], str]:
+        indexes = get_indexes(self.cmd, self.parameters)
+
         return format_cmd(
             string,
             package_name=self.cmd.poetry.package.name,
-            indexes=get_indexes(self.cmd, self.parameters),
+            indexes=indexes.split(" "),
             **kwargs
         ), ' '.join(
             format_cmd(
                 string,
                 package_name=self.cmd.poetry.package.name,
-                indexes=mask_string(get_indexes(self.cmd, self.parameters)),
+                indexes=mask_string(indexes),
                 **kwargs
             )
         )
@@ -406,7 +408,7 @@ class Builder:
         )
         self.cmd.debug(
             f"Executing: {print_safe_cmd}")
-        run_python_cmd("-m", *cmd, logger=self.cmd)
+        run_python_cmd("-m", *cmd)
 
     @verify_checksum("package-artifact-path")
     def build_package(self):

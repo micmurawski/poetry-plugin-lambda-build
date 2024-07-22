@@ -90,15 +90,28 @@ def run_cmd(
 
 
 def format_cmd(cmd: list[str], **kwargs) -> list[str]:
+    result = []
     for i in range(len(cmd)):
+
+        _added = False
+
         for k, v in kwargs.items():
             pattern = "{"+k+"}"
-            if pattern in cmd[i]:
-                cmd[i] = cmd[i].replace(pattern, v)
-    return cmd
+
+            if cmd[i] == pattern and isinstance(v, list) and k == "indexes":
+                result += v
+                _added = True
+            elif cmd[i] == pattern:
+                result.append(v)
+                _added = True
+
+        if not _added:
+            result.append(cmd[i])
+    return result
 
 
 def compute_checksum(path: str | Path, exclude: None | list[str | Path] = None) -> str:
+
     m = hashlib.md5()
 
     if exclude is None:
