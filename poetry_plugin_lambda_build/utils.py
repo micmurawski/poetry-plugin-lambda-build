@@ -13,8 +13,13 @@ from functools import reduce
 from operator import or_
 
 
-def join_cmds(*cmds: list[str], joiner: str = " && ") -> str:
-    return joiner.join(cmds)
+def join_cmds(*cmds: list[list[str]], joiner: str = " && ") -> list[str]:
+    result = []
+    for i, cmd in enumerate(cmds):
+        result += cmd
+        if i != len(cmds) - 1:
+            result.append(joiner)
+    return result
 
 
 @contextmanager
@@ -84,12 +89,13 @@ def run_cmd(
     return process.returncode
 
 
-def format_str(string: str, **kwargs) -> str:
-    for k, v in kwargs.items():
-        pattern = "{"+k+"}"
-        if pattern in string:
-            string = string.replace(pattern, v)
-    return string
+def format_cmd(cmd: list[str], **kwargs) -> list[str]:
+    for i in range(len(cmd)):
+        for k, v in kwargs.items():
+            pattern = "{"+k+"}"
+            if pattern in cmd[i]:
+                cmd[i] = cmd[i].replace(pattern, v)
+    return cmd
 
 
 def compute_checksum(path: str | Path, exclude: None | list[str | Path] = None) -> str:

@@ -84,9 +84,9 @@ def run_container(logger, **kwargs) -> Generator[Container, None, None]:
         docker_container.remove(v=True)
 
 
-def exec_run_container(logger, container: Container, entrypoint: str, container_cmd: str):
+def exec_run_container(logger, container: Container, entrypoint: str, container_cmd: list[str]):
     exit_code, stream = container.exec_run(
-        f'{entrypoint} -c "{container_cmd}"',
+        f'{entrypoint} -c "{' '.join(container_cmd)}"',
         stdout=True,
         stderr=True,
         stream=True

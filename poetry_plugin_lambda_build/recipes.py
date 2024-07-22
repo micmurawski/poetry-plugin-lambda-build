@@ -24,7 +24,7 @@ from poetry_plugin_lambda_build.docker import (
 from poetry_plugin_lambda_build.parameters import ParametersContainer
 from poetry_plugin_lambda_build.requirements import RequirementsExporter
 from poetry_plugin_lambda_build.utils import (
-    format_str,
+    format_cmd,
     join_cmds,
     mask_string,
     remove_suffix,
@@ -90,7 +90,7 @@ def verify_checksum(param):
 
             if self.parameters["no-checksum"]:
                 return fun(self, *args, **kwargs)
-            
+
             target = self.parameters[param]
             prefix = param.split("-", 1)[0]
             install_dir = self.parameters[f"{prefix}-install-dir"]
@@ -168,17 +168,19 @@ class Builder:
         else:
             self.in_container = False
 
-    def format_str(self, string: str, **kwargs) -> tuple[str, str]:
-        return format_str(
+    def format_cmd(self, string: str, **kwargs) -> tuple[list[str], str]:
+        return format_cmd(
             string,
             package_name=self.cmd.poetry.package.name,
             indexes=get_indexes(self.cmd, self.parameters),
             **kwargs
-        ), format_str(
-            string,
-            package_name=self.cmd.poetry.package.name,
-            indexes=mask_string(get_indexes(self.cmd, self.parameters)),
-            **kwargs
+        ), ' '.join(
+            format_cmd(
+                string,
+                package_name=self.cmd.poetry.package.name,
+                indexes=mask_string(get_indexes(self.cmd, self.parameters)),
+                **kwargs
+            )
         )
 
     def _build_separate_layer_in_container(self, requirements_path: str, layer_output_dir: str):
@@ -198,7 +200,7 @@ class Builder:
             else:
                 install_deps_cmd_in_container_tmpl = INSTALL_DEPS_CMD_IN_CONTAINER_TMPL
 
-            cmd, print_safe_cmd = self.format_str(
+            cmd, print_safe_cmd = self.format_cmd(
                 install_deps_cmd_in_container_tmpl,
                 output_dir=CONTAINER_CACHE_DIR,
                 requirements="/requirements.txt",
@@ -236,13 +238,13 @@ class Builder:
 
     def _build_separate_layer_on_local(self, requirements_path: str, layer_output_dir: str):
         self.cmd.info("Installing requirements")
-        cmd, print_safe_cmd = self.format_str(
+        cmd, print_safe_cmd = self.format_cmd(
             INSTALL_DEPS_CMD_TMPL,
             output_dir=layer_output_dir,
             requirements=requirements_path,
         )
-        self.cmd.info(f"Executing: {print_safe_cmd}")
-        run_python_cmd("-m", cmd)
+        self.cmd.info(f"Executing: {''.join(print_safe_cmd)}")
+        run_python_cmd("-m", *cmd, logger=self.cmd)
 
     @verify_checksum("layer-artifact-path")
     def build_separate_layer_package(self):
@@ -298,7 +300,7 @@ class Builder:
             else:
                 install_in_container_no_deps_cmd_tmpl = INSTALL_IN_CONTAINER_NO_DEPS_CMD_TMPL
 
-            cmd, print_safe_cmd = self.format_str(
+            cmd, print_safe_cmd = self.format_cmd(
                 install_in_container_no_deps_cmd_tmpl,
                 output_dir=CONTAINER_CACHE_DIR
             )
@@ -322,12 +324,12 @@ class Builder:
             )
         else:
             install_no_deps_cmd_tmpl = INSTALL_NO_DEPS_CMD_TMPL
-        cmd, print_safe_cmd = self.format_str(
+        cmd, print_safe_cmd = self.format_cmd(
             install_no_deps_cmd_tmpl,
             output_dir=package_dir,
         )
         self.cmd.debug(f"Executing: {print_safe_cmd}")
-        run_python_cmd("-m", cmd, logger=self.cmd)
+        run_python_cmd("-m", *cmd, logger=self.cmd)
 
     @verify_checksum("function-artifact-path")
     def build_separated_function_package(self):
@@ -369,7 +371,7 @@ class Builder:
             else:
                 install_in_container_cmd_tmpl = INSTALL_IN_CONTAINER_CMD_TMPL
 
-            cmd, print_safe_cmd = self.format_str(
+            cmd, print_safe_cmd = self.format_cmd(
                 install_in_container_cmd_tmpl,
                 output_dir=CONTAINER_CACHE_DIR,
             )
@@ -398,13 +400,13 @@ class Builder:
         else:
             install_cmd_tmpl = INSTALL_CMD_TMPL
 
-        cmd, print_safe_cmd = self.format_str(
+        cmd, print_safe_cmd = self.format_cmd(
             install_cmd_tmpl,
             output_dir=package_dir
         )
         self.cmd.debug(
             f"Executing: {print_safe_cmd}")
-        run_python_cmd("-m", cmd, logger=self.cmd)
+        run_python_cmd("-m", *cmd, logger=self.cmd)
 
     @verify_checksum("package-artifact-path")
     def build_package(self):
