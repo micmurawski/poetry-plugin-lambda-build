@@ -91,22 +91,23 @@ def run_cmd(
 
 def format_cmd(cmd: list[str], **kwargs) -> list[str]:
     result = []
-    for i in range(len(cmd)):
+    for _cmd in cmd:
 
         _added = False
 
         for k, v in kwargs.items():
             pattern = "{"+k+"}"
 
-            if cmd[i] == pattern and isinstance(v, list) and k == "indexes":
-                result += v
-                _added = True
-            elif cmd[i] == pattern:
-                result.append(v)
+            if _cmd == pattern:
+                if isinstance(v, list):
+                    result += v
+                else:
+                    result.append(v)
                 _added = True
 
         if not _added:
-            result.append(cmd[i])
+            result.append(_cmd)
+
     return result
 
 
