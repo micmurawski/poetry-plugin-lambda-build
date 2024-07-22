@@ -75,7 +75,7 @@ def get_requirements(cmd: Command, parameters: ParametersContainer) -> str:
     ).export()
 
 
-def get_indexes(cmd: Command, parameters: ParametersContainer) -> list[str]:
+def get_indexes(cmd: Command, parameters: ParametersContainer) -> str:
     return RequirementsExporter(
         poetry=cmd.poetry,
         io=cmd.io,

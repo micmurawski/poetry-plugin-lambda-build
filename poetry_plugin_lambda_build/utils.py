@@ -89,7 +89,7 @@ def run_cmd(
     return process.returncode
 
 
-def format_cmd(cmd: list[str], **kwargs) -> list[str]:
+def format_cmd(cmd: list[str | list[str]], **kwargs) -> list[str]:
     result = []
     for _cmd in cmd:
 
