@@ -13,8 +13,8 @@ from functools import reduce
 from operator import or_
 
 
-def join_cmds(*cmds: list[list[str]], joiner: str = "&&") -> list[str]:
-    return joiner.join([" ".join(cmd) for cmd in cmds])
+def join_cmds(*cmds: list[list[str]], joiner: str = " && ") -> list[str]:
+    return joiner.join([" ".join(cmd) for cmd in cmds]).split(" ")
 
 
 @contextmanager
@@ -84,26 +84,23 @@ def run_cmd(
     return process.returncode
 
 
-def format_cmd(cmd: list[str], **kwargs) -> list[str]:
-    result = []
-    for _cmd in cmd:
+def format_cmd(cmd: list[str | list], **kwargs) -> list[str]:
+    """
+    Formats a command by joining its elements into a single string,
+    replacing placeholders with provided keyword arguments, and then
+    splitting the string back into a list of arguments.
 
-        _added = False
+    Args:
+        cmd (list[str | list]): The command to format.
+        **kwargs: Keyword arguments to replace placeholders in the command.
 
-        for k, v in kwargs.items():
-            pattern = "{"+k+"}"
-
-            if _cmd == pattern:
-                if isinstance(v, list):
-                    result += v
-                else:
-                    result.append(v)
-                _added = True
-
-        if not _added:
-            result.append(_cmd)
-
-    return result
+    Returns:
+        list[str]: The formatted command as a list of arguments.
+    """
+    split_marker = "----"
+    return split_marker.join(
+        [" ".join(c) if isinstance(c, list) else c for c in cmd]
+    ).format(**kwargs).split(split_marker)
 
 
 def compute_checksum(path: str | Path, exclude: None | list[str | Path] = None) -> str:
