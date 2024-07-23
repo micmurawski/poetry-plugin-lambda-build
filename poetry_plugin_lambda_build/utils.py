@@ -14,12 +14,7 @@ from operator import or_
 
 
 def join_cmds(*cmds: list[list[str]], joiner: str = "&&") -> list[str]:
-    result = []
-    for i, cmd in enumerate(cmds):
-        result += cmd
-        if i != len(cmds) - 1:
-            result.append(joiner)
-    return result
+    return joiner.join([" ".join(cmd) for cmd in cmds])
 
 
 @contextmanager
