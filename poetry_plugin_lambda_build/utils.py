@@ -13,8 +13,13 @@ from functools import reduce
 from operator import or_
 
 
-def join_cmds(*cmds: list[str], joiner: str = " && ") -> str:
-    return joiner.join(cmds)
+def join_cmds(*cmds: list[list[str]], joiner: str = "&&") -> list[str]:
+    result = []
+    for i, cmd in enumerate(cmds):
+        result += cmd
+        if i != len(cmds) - 1:
+            result.append(joiner)
+    return result
 
 
 @contextmanager
@@ -56,11 +61,8 @@ def run_cmd(
     stderr: int = subprocess.PIPE,
     **kwargs
 ) -> int:
-    cmd = []
-    for a in args:
-        cmd += a.split(" ")
     process = subprocess.Popen(
-        cmd,
+        args,
         stdout=stdout,
         stderr=stderr,
         **kwargs
@@ -87,15 +89,30 @@ def run_cmd(
     return process.returncode
 
 
-def format_str(string: str, **kwargs) -> str:
-    for k, v in kwargs.items():
-        pattern = "{"+k+"}"
-        if pattern in string:
-            string = string.replace(pattern, v)
-    return string
+def format_cmd(cmd: list[str], **kwargs) -> list[str]:
+    result = []
+    for _cmd in cmd:
+
+        _added = False
+
+        for k, v in kwargs.items():
+            pattern = "{"+k+"}"
+
+            if _cmd == pattern:
+                if isinstance(v, list):
+                    result += v
+                else:
+                    result.append(v)
+                _added = True
+
+        if not _added:
+            result.append(_cmd)
+
+    return result
 
 
 def compute_checksum(path: str | Path, exclude: None | list[str | Path] = None) -> str:
+
     m = hashlib.md5()
 
     if exclude is None:
