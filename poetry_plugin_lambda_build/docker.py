@@ -85,8 +85,13 @@ def run_container(logger, **kwargs) -> Generator[Container, None, None]:
 
 
 def exec_run_container(logger, container: Container, entrypoint: str, container_cmd: list[str]):
+    cmd = ' '.join([
+        entrypoint,
+        '-c',
+        ' '.join(container_cmd)
+    ])
     exit_code, stream = container.exec_run(
-        f'{entrypoint} -c "{' '.join(container_cmd)}"',
+        cmd=cmd,
         stdout=True,
         stderr=True,
         stream=True
