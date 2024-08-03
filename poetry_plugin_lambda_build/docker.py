@@ -20,7 +20,7 @@ ARGS_PARSERS = {
     "environment": _parse_str_to_list,
     "dns": _parse_str_to_list,
     "entrypoint": _parse_str_to_list,
-    "network_disabled": bool
+    "network_disabled": bool,
 }
 
 
@@ -84,12 +84,14 @@ def run_container(logger, **kwargs) -> Generator[Container, None, None]:
         docker_container.remove(v=True)
 
 
-def exec_run_container(logger, container: Container, entrypoint: str, container_cmd: list[str]):
+def exec_run_container(
+    logger, container: Container, entrypoint: str, container_cmd: list[str]
+):
     exit_code, stream = container.exec_run(
         f'{entrypoint} -c "{' '.join(container_cmd)}"',
         stdout=True,
         stderr=True,
-        stream=True
+        stream=True,
     )
     for line in stream:
         logger.info(line.strip().decode())

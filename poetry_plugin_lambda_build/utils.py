@@ -1,16 +1,15 @@
 from __future__ import annotations
 
+import hashlib
 import os
 import subprocess
 import sys
 from contextlib import contextmanager
-
-from logging import Logger
-from pathlib import Path
-import hashlib
 from fnmatch import fnmatch
 from functools import reduce
+from logging import Logger
 from operator import or_
+from pathlib import Path
 
 
 def join_cmds(*cmds: list[list[str]], joiner: str = " && ") -> list[str]:
@@ -28,11 +27,11 @@ def cd(path):
 
 
 def remove_prefix(text: str, prefix: str) -> str:
-    return text[len(prefix):] if text.startswith(prefix) and prefix else text
+    return text[len(prefix) :] if text.startswith(prefix) and prefix else text
 
 
 def remove_suffix(text: str, suffix: str) -> str:
-    return text[:-len(suffix)] if text.endswith(suffix) and suffix else text
+    return text[: -len(suffix)] if text.endswith(suffix) and suffix else text
 
 
 def mask_string(s: str) -> str:
@@ -44,9 +43,11 @@ def run_python_cmd(
     logger: Logger | None = None,
     stdout: int = subprocess.PIPE,
     stderr: int = subprocess.PIPE,
-    **kwargs
+    **kwargs,
 ) -> int:
-    return run_cmd(sys.executable, *args, logger=logger, stdout=stdout, stderr=stderr, **kwargs)
+    return run_cmd(
+        sys.executable, *args, logger=logger, stdout=stdout, stderr=stderr, **kwargs
+    )
 
 
 def run_cmd(
@@ -54,14 +55,9 @@ def run_cmd(
     logger: Logger | None = None,
     stdout: int = subprocess.PIPE,
     stderr: int = subprocess.PIPE,
-    **kwargs
+    **kwargs,
 ) -> int:
-    process = subprocess.Popen(
-        args,
-        stdout=stdout,
-        stderr=stderr,
-        **kwargs
-    )
+    process = subprocess.Popen(args, stdout=stdout, stderr=stderr, **kwargs)
     if logger:
         while process.poll() is None:
             logger.info(process.stdout.readline().decode())
@@ -98,13 +94,14 @@ def format_cmd(cmd: list[str | list], **kwargs) -> list[str]:
         list[str]: The formatted command as a list of arguments.
     """
     split_marker = "----"
-    return split_marker.join(
-        [" ".join(c) if isinstance(c, list) else c for c in cmd]
-    ).format(**kwargs).split(split_marker)
+    return (
+        split_marker.join([" ".join(c) if isinstance(c, list) else c for c in cmd])
+        .format(**kwargs)
+        .split(split_marker)
+    )
 
 
 def compute_checksum(path: str | Path, exclude: None | list[str | Path] = None) -> str:
-
     m = hashlib.md5()
 
     if exclude is None:
@@ -114,8 +111,7 @@ def compute_checksum(path: str | Path, exclude: None | list[str | Path] = None) 
             for file_read in files:
                 full_path = os.path.join(root, file_read)
                 if not reduce(
-                    or_, [fnmatch(full_path, pattern)
-                          for pattern in exclude], False
+                    or_, [fnmatch(full_path, pattern) for pattern in exclude], False
                 ):
                     m.update(str(os.stat(full_path)).encode())
     else:

@@ -4,13 +4,13 @@ import os
 from fnmatch import fnmatch
 from functools import reduce
 from operator import or_
-from zipfile import ZipFile, ZIP_STORED, ZIP_DEFLATED, ZIP_BZIP2, ZIP_LZMA
+from zipfile import ZIP_BZIP2, ZIP_DEFLATED, ZIP_LZMA, ZIP_STORED, ZipFile
 
 compression = {
     "ZIP_STORED": ZIP_STORED,
     "ZIP_DEFLATED": ZIP_DEFLATED,
     "ZIP_BZIP2": ZIP_BZIP2,
-    "ZIP_LZMA": ZIP_LZMA
+    "ZIP_LZMA": ZIP_LZMA,
 }
 
 
@@ -28,8 +28,6 @@ def create_zip_package(dir, output, exclude=None, **kwargs):
                 file_path = os.path.join(base_path, file)
 
                 if not reduce(
-                    or_, [fnmatch(file_path, pattern)
-                          for pattern in exclude], False
+                    or_, [fnmatch(file_path, pattern) for pattern in exclude], False
                 ):
-                    zip_file.write(
-                        file_path, arcname=file_path.replace(dir, ""))
+                    zip_file.write(file_path, arcname=file_path.replace(dir, ""))

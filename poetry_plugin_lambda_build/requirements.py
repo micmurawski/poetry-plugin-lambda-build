@@ -16,7 +16,13 @@ from poetry_plugin_export.walker import get_project_dependency_packages
 class RequirementsExporter:
     ALLOWED_HASH_ALGORITHMS = ("sha256", "sha384", "sha512")
 
-    def __init__(self, poetry: Poetry, io: IO, groups: dict[str, set[str]] = {}, extras: Collection[NormalizedName] = ()) -> None:
+    def __init__(
+        self,
+        poetry: Poetry,
+        io: IO,
+        groups: dict[str, set[str]] = {},
+        extras: Collection[NormalizedName] = (),
+    ) -> None:
         self._poetry = poetry
         self._io = io
         self._validate_group_options(groups)
@@ -49,14 +55,13 @@ class RequirementsExporter:
                     for opt in sorted(invalid_options[group])
                 )
                 message_parts.append(f"{group} (via {opts})")
-            raise GroupNotFound(
-                f"Group(s) not found: {', '.join(message_parts)}")
+            raise GroupNotFound(f"Group(s) not found: {', '.join(message_parts)}")
 
     @property
     def activated_groups(self) -> set[str]:
-        return self._groups["only"] or self.non_optional_groups.union(self._groups["with"]).difference(
-            self._groups["without"]
-        )
+        return self._groups["only"] or self.non_optional_groups.union(
+            self._groups["with"]
+        ).difference(self._groups["without"])
 
     @property
     def non_optional_groups(self) -> set[str]:
@@ -67,9 +72,50 @@ class RequirementsExporter:
             if not group.is_optional()
         }
 
-    def export(self, with_extras: bool = False, allow_editable: bool = True, with_hashes: bool = False) -> str:
+    def _split_dependency_pkg(self, dependency_package, with_extras):
+        pkg = dependency_package.clone()
+
+        if not with_extras:
+            pkg = pkg.without_features()
+
+        return pkg.dependency, pkg.package
+
+    def _handle_develop_mode(self, package, allow_editable):
+        if package.develop:
+            if not allow_editable:
+                self._io.write_error_line(
+                    f"<warning>Warning: {package.pretty_name} is locked in develop"
+                    " (editable) mode, which is incompatible with the"
+                    " constraints.txt format.</warning>"
+                )
+                return False
+        return True
+
+    def _determine_requirement_line(
+        self,
+        is_direct_remote_reference,
+        is_direct_local_reference,
+        requirement,
+        package,
+        dependency,
+    ):
         from poetry.core.packages.utils.utils import path_to_url
 
+        if is_direct_remote_reference:
+            return requirement
+        elif is_direct_local_reference:
+            assert dependency.source_url is not None
+            dependency_uri = path_to_url(dependency.source_url)
+            return f"{package.complete_name} @ {dependency_uri}"
+        else:
+            return f"{package.complete_name}=={package.version}"
+
+    def export(
+        self,
+        with_extras: bool = False,
+        allow_editable: bool = True,
+        with_hashes: bool = False,
+    ) -> str:
         indexes = set()
         content = ""
         dependency_lines = set()
@@ -85,37 +131,26 @@ class RequirementsExporter:
         ):
             line = ""
 
-            if not with_extras:
-                dependency_package = dependency_package.without_features()
+            dependency, package = self._split_dependency_pkg(
+                dependency_package, with_extras
+            )
 
-            dependency = dependency_package.dependency
-            package = dependency_package.package
-
-            if package.develop:
-                if not allow_editable:
-                    self._io.write_error_line(
-                        f"<warning>Warning: {package.pretty_name} is locked in develop"
-                        " (editable) mode, which is incompatible with the"
-                        " constraints.txt format.</warning>"
-                    )
-                    continue
+            if self._handle_develop_mode(package, allow_editable):
                 line += "-e "
 
-            requirement = dependency.to_pep_508(
-                with_extras=False, resolved=True)
+            requirement = dependency.to_pep_508(with_extras=False, resolved=True)
             is_direct_local_reference = (
                 dependency.is_file() or dependency.is_directory()
             )
             is_direct_remote_reference = dependency.is_vcs() or dependency.is_url()
 
-            if is_direct_remote_reference:
-                line = requirement
-            elif is_direct_local_reference:
-                assert dependency.source_url is not None
-                dependency_uri = path_to_url(dependency.source_url)
-                line = f"{package.complete_name} @ {dependency_uri}"
-            else:
-                line = f"{package.complete_name}=={package.version}"
+            line = self._determine_requirement_line(
+                is_direct_remote_reference,
+                is_direct_local_reference,
+                requirement,
+                package,
+                dependency,
+            )
 
             if not is_direct_remote_reference and ";" in requirement:
                 markers = requirement.split(";", 1)[1].strip()
@@ -165,9 +200,7 @@ class RequirementsExporter:
         # Iterate over repositories so that we get the repository with the highest
         # priority first so that --index-url comes before --extra-index-url
         for repository in self._poetry.pool.all_repositories:
-            if (
-                not isinstance(repository, HTTPRepository)
-            ):
+            if not isinstance(repository, HTTPRepository):
                 continue
             url = repository.authenticated_url
             parsed_url = urllib.parse.urlsplit(url)

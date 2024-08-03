@@ -19,6 +19,7 @@ if TYPE_CHECKING:
 
 
 def get_python_version_region_markers(packages: list[Package]) -> list[BaseMarker]:
+    precision_breakpoint = 2
     markers = []
 
     regions = constraint_regions([package.python_constraint for package in packages])
@@ -27,7 +28,9 @@ def get_python_version_region_markers(packages: list[Package]) -> list[BaseMarke
         if region.min is not None:
             min_operator = ">=" if region.include_min else ">"
             marker_name = (
-                "python_full_version" if region.min.precision > 2 else "python_version"
+                "python_full_version"
+                if region.min.precision > precision_breakpoint
+                else "python_version"
             )
             lo = SingleMarker(marker_name, f"{min_operator} {region.min}")
             marker = marker.intersect(lo)
@@ -35,7 +38,9 @@ def get_python_version_region_markers(packages: list[Package]) -> list[BaseMarke
         if region.max is not None:
             max_operator = "<=" if region.include_max else "<"
             marker_name = (
-                "python_full_version" if region.max.precision > 2 else "python_version"
+                "python_full_version"
+                if region.max.precision > precision_breakpoint
+                else "python_version"
             )
             hi = SingleMarker(marker_name, f"{max_operator} {region.max}")
             marker = marker.intersect(hi)
@@ -56,9 +61,9 @@ def get_project_dependency_packages(
     if project_python_marker is not None:
         marked_requires: list[Dependency] = []
         for require in project_requires:
-            require = require.clone()
-            require.marker = require.marker.intersect(project_python_marker)
-            marked_requires.append(require)
+            require_clone = require.clone()
+            require_clone.marker = require.marker.intersect(project_python_marker)
+            marked_requires.append(require_clone)
         project_requires = marked_requires
 
     repository = locker.locked_repository()
