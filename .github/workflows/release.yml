@@ -20,7 +20,7 @@ jobs:
           poetry config virtualenvs.create false
           poetry install
       - name: Install
-        run: poetry install --with test
+        run: poetry install --with dev
       - name: Run Pytest
         run: poetry run pytest
   deploy:
