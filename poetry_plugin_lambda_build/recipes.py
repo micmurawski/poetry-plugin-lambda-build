@@ -1,8 +1,10 @@
 from __future__ import annotations
-from functools import wraps
 
 import enum
 import os
+import shutil
+import zipfile
+from functools import wraps
 from tempfile import TemporaryDirectory
 
 from poetry.console.commands.command import Command
@@ -13,13 +15,13 @@ from poetry_plugin_lambda_build.commands import (
     INSTALL_DEPS_CMD_TMPL,
     INSTALL_IN_CONTAINER_CMD_TMPL,
     INSTALL_IN_CONTAINER_NO_DEPS_CMD_TMPL,
-    INSTALL_NO_DEPS_CMD_TMPL
+    INSTALL_NO_DEPS_CMD_TMPL,
 )
 from poetry_plugin_lambda_build.docker import (
     copy_from_container,
     copy_to_container,
     exec_run_container,
-    run_container
+    run_container,
 )
 from poetry_plugin_lambda_build.parameters import ParametersContainer
 from poetry_plugin_lambda_build.requirements import RequirementsExporter
@@ -28,13 +30,11 @@ from poetry_plugin_lambda_build.utils import (
     join_cmds,
     mask_string,
     remove_suffix,
-    run_python_cmd
+    run_python_cmd,
 )
 from poetry_plugin_lambda_build.zip import create_zip_package
-import shutil
-from .utils import compute_checksum
-import zipfile
 
+from .utils import compute_checksum
 
 CONTAINER_CACHE_DIR = "/opt/lambda/cache"
 CURRENT_WORK_DIR = os.getcwd()
@@ -60,26 +60,21 @@ class BuildType(enum.Enum):
                 return cls.IN_CONTAINER_SEPARATED
             else:
                 return cls.IN_CONTAINER_MERGED
+        elif layer and function:
+            return cls.SEPARATED
         else:
-            if layer and function:
-                return cls.SEPARATED
-            else:
-                return cls.MERGED
+            return cls.MERGED
 
 
 def get_requirements(cmd: Command, parameters: ParametersContainer) -> str:
     return RequirementsExporter(
-        poetry=cmd.poetry,
-        io=cmd.io,
-        groups=parameters.groups
+        poetry=cmd.poetry, io=cmd.io, groups=parameters.groups
     ).export()
 
 
 def get_indexes(cmd: Command, parameters: ParametersContainer) -> str:
     return RequirementsExporter(
-        poetry=cmd.poetry,
-        io=cmd.io,
-        groups=parameters.groups
+        poetry=cmd.poetry, io=cmd.io, groups=parameters.groups
     ).export_indexes()
 
 
@@ -87,7 +82,6 @@ def verify_checksum(param):
     def decorator(fun):
         @wraps(fun)
         def wrapper(self: Builder, *args, **kwargs):
-
             if self.parameters["no-checksum"]:
                 return fun(self, *args, **kwargs)
 
@@ -97,13 +91,14 @@ def verify_checksum(param):
             is_zip = target.endswith(".zip")
             try:
                 if is_zip:
-                    archive = zipfile.ZipFile(target, 'r')
+                    archive = zipfile.ZipFile(target, "r")
                     prev_checksum = archive.read(
                         os.path.join(install_dir, "checksum")
                     ).decode()
                 else:
-                    prev_checksum = open(os.path.join(
-                        target, install_dir, "checksum")).read()
+                    prev_checksum = open(
+                        os.path.join(target, install_dir, "checksum")
+                    ).read()
             except (FileNotFoundError, KeyError):
                 prev_checksum = None
 
@@ -117,8 +112,8 @@ def verify_checksum(param):
                     exclude=[
                         os.path.join(CURRENT_WORK_DIR, target),
                         os.path.join(CURRENT_WORK_DIR, target, "*"),
-                        os.path.join(CURRENT_WORK_DIR, "poetry.lock")
-                    ]
+                        os.path.join(CURRENT_WORK_DIR, "poetry.lock"),
+                    ],
                 )
             else:
                 curr_checksum = compute_checksum(
@@ -126,7 +121,7 @@ def verify_checksum(param):
                     exclude=[
                         os.path.join(CURRENT_WORK_DIR, target, "*"),
                         os.path.join(CURRENT_WORK_DIR, target),
-                    ]
+                    ],
                 )
             self.cmd.info("Checksum verification...")
             self.cmd.info(f"Previous checksum = {prev_checksum}")
@@ -145,16 +140,18 @@ def verify_checksum(param):
                 if is_zip:
                     with zipfile.ZipFile(target, "a") as zipf:
                         zipf.write(
-                            checksum_file_path,
-                            os.path.join(install_dir, "checksum")
+                            checksum_file_path, os.path.join(install_dir, "checksum")
                         )
                 else:
-                    shutil.copyfile(checksum_file_path, os.path.join(
-                        CURRENT_WORK_DIR, target, install_dir, "checksum")
+                    shutil.copyfile(
+                        checksum_file_path,
+                        os.path.join(CURRENT_WORK_DIR, target, install_dir, "checksum"),
                     )
 
             return retval
+
         return wrapper
+
     return decorator
 
 
@@ -163,7 +160,10 @@ class Builder:
         self.cmd = cmd
         self.parameters = parameters
         self._type: BuildType = BuildType.get_type(parameters)
-        if self._type in (BuildType.IN_CONTAINER_SEPARATED, BuildType.IN_CONTAINER_MERGED):
+        if self._type in (
+            BuildType.IN_CONTAINER_SEPARATED,
+            BuildType.IN_CONTAINER_MERGED,
+        ):
             self.in_container = True
         else:
             self.in_container = False
@@ -174,30 +174,33 @@ class Builder:
         return format_cmd(
             string,
             package_name=self.cmd.poetry.package.name,
-            indexes=indexes.split(" "),
-            **kwargs
-        ), ' '.join(
+            indexes=indexes,
+            **kwargs,
+        ), " ".join(
             format_cmd(
                 string,
                 package_name=self.cmd.poetry.package.name,
                 indexes=mask_string(indexes),
-                **kwargs
+                **kwargs,
             )
         )
 
-    def _build_separate_layer_in_container(self, requirements_path: str, layer_output_dir: str):
+    def _build_separate_layer_in_container(
+        self, requirements_path: str, layer_output_dir: str
+    ):
         self.cmd.info("Running docker container...")
-        with run_container(self.cmd, **self.parameters.get_section("docker")) as container:
+        with run_container(
+            self.cmd, **self.parameters.get_section("docker")
+        ) as container:
             copy_to_container(
-                src=requirements_path,
-                dst=f"{container.id}:/requirements.txt"
+                src=requirements_path, dst=f"{container.id}:/requirements.txt"
             )
             self.cmd.info("Installing requirements")
 
             if self.parameters.get("pre-install-script"):
                 install_deps_cmd_in_container_tmpl = join_cmds(
                     self.parameters.get("pre_install_script"),
-                    INSTALL_DEPS_CMD_IN_CONTAINER_TMPL
+                    INSTALL_DEPS_CMD_IN_CONTAINER_TMPL,
                 )
             else:
                 install_deps_cmd_in_container_tmpl = INSTALL_DEPS_CMD_IN_CONTAINER_TMPL
@@ -207,19 +210,16 @@ class Builder:
                 output_dir=CONTAINER_CACHE_DIR,
                 requirements="/requirements.txt",
             )
-            self.cmd.debug(
-                f"Executing: {print_safe_cmd}")
+            self.cmd.debug(f"Executing: {print_safe_cmd}")
             exec_run_container(
                 logger=self.cmd,
                 container=container,
                 entrypoint=self.parameters["docker-entrypoint"],
                 container_cmd=cmd,
             )
-            self.cmd.info(
-                f"Coping output to {layer_output_dir}")
+            self.cmd.info(f"Coping output to {layer_output_dir}")
             copy_from_container(
-                src=f"{container.id}:{CONTAINER_CACHE_DIR}/.",
-                dst=layer_output_dir
+                src=f"{container.id}:{CONTAINER_CACHE_DIR}/.", dst=layer_output_dir
             )
 
     def _create_target(self, dir: str, target: str, exclude: None | list = None):
@@ -228,17 +228,19 @@ class Builder:
                 dir=dir,
                 output=target,
                 exclude=exclude,
-                **self.parameters.get_section("zip")
+                **self.parameters.get_section("zip"),
             )
         else:
             shutil.copytree(
                 dir,
                 target,
                 dirs_exist_ok=True,
-                ignore=shutil.ignore_patterns(*exclude) if exclude else None
+                ignore=shutil.ignore_patterns(*exclude) if exclude else None,
             )
 
-    def _build_separate_layer_on_local(self, requirements_path: str, layer_output_dir: str):
+    def _build_separate_layer_on_local(
+        self, requirements_path: str, layer_output_dir: str
+    ):
         self.cmd.info("Installing requirements")
         cmd, print_safe_cmd = self.format_cmd(
             INSTALL_DEPS_CMD_TMPL,
@@ -255,8 +257,7 @@ class Builder:
             install_dir = self.parameters.get("layer-install-dir", "")
             layer_output_dir = os.path.join(tmp_dir, "layer-output")
             target = os.path.join(
-                CURRENT_WORK_DIR, self.parameters.get(
-                    "layer-artifact-path", "")
+                CURRENT_WORK_DIR, self.parameters.get("layer-artifact-path", "")
             )
             requirements_path = os.path.join(tmp_dir, "requirements.txt")
             layer_output_dir = os.path.join(layer_output_dir, install_dir)
@@ -285,35 +286,33 @@ class Builder:
                 target=target,
                 exclude=[requirements_path],
             )
-            self.cmd.info(
-                f"target successfully built: {target}...")
+            self.cmd.info(f"target successfully built: {target}...")
 
     def _build_separated_function_in_container(self, package_dir: str):
-        with run_container(self.cmd, **self.parameters.get_section("docker"), working_dir="/") as container:
-            copy_to_container(
-                src=f"{CURRENT_WORK_DIR}/.",
-                dst=f"{container.id}:/"
-            )
+        with run_container(
+            self.cmd, **self.parameters.get_section("docker"), working_dir="/"
+        ) as container:
+            copy_to_container(src=f"{CURRENT_WORK_DIR}/.", dst=f"{container.id}:/")
             if self.parameters.get("pre-install-script"):
                 install_in_container_no_deps_cmd_tmpl = join_cmds(
                     self.parameters.get("pre-install-script"),
-                    INSTALL_IN_CONTAINER_NO_DEPS_CMD_TMPL
+                    INSTALL_IN_CONTAINER_NO_DEPS_CMD_TMPL,
                 )
             else:
-                install_in_container_no_deps_cmd_tmpl = INSTALL_IN_CONTAINER_NO_DEPS_CMD_TMPL
+                install_in_container_no_deps_cmd_tmpl = (
+                    INSTALL_IN_CONTAINER_NO_DEPS_CMD_TMPL
+                )
 
             cmd, print_safe_cmd = self.format_cmd(
-                install_in_container_no_deps_cmd_tmpl,
-                output_dir=CONTAINER_CACHE_DIR
+                install_in_container_no_deps_cmd_tmpl, output_dir=CONTAINER_CACHE_DIR
             )
 
-            self.cmd.info(
-                f"Executing: {print_safe_cmd}")
+            self.cmd.info(f"Executing: {print_safe_cmd}")
             exec_run_container(
-                self.cmd, container, self.parameters["docker-entrypoint"], cmd)
+                self.cmd, container, self.parameters["docker-entrypoint"], cmd
+            )
             copy_from_container(
-                src=f"{container.id}:{CONTAINER_CACHE_DIR}/.",
-                dst=package_dir
+                src=f"{container.id}:{CONTAINER_CACHE_DIR}/.", dst=package_dir
             )
 
     def _build_separated_function_on_local(self, package_dir: str):
@@ -321,8 +320,7 @@ class Builder:
 
         if self.parameters.get("pre-install-script"):
             install_no_deps_cmd_tmpl = join_cmds(
-                self.parameters.get("pre-install-script"),
-                INSTALL_NO_DEPS_CMD_TMPL
+                self.parameters.get("pre-install-script"), INSTALL_NO_DEPS_CMD_TMPL
             )
         else:
             install_no_deps_cmd_tmpl = INSTALL_NO_DEPS_CMD_TMPL
@@ -340,13 +338,11 @@ class Builder:
             install_dir = self.parameters.get("function-install-dir", "")
             package_dir = tmp_dir
             target = os.path.join(
-                CURRENT_WORK_DIR, self.parameters.get(
-                    "function-artifact-path", "")
+                CURRENT_WORK_DIR, self.parameters.get("function-artifact-path", "")
             )
             package_dir = os.path.join(package_dir, install_dir)
             if self.in_container:
-                self._build_separated_function_in_container(
-                    package_dir)
+                self._build_separated_function_in_container(package_dir)
             else:
                 self._build_separated_function_on_local(package_dir)
 
@@ -356,19 +352,20 @@ class Builder:
                 dir=remove_suffix(package_dir, install_dir),
                 target=target,
             )
-            self.cmd.info(
-                f"Target successfully built: {target}...")
+            self.cmd.info(f"Target successfully built: {target}...")
 
     def _build_package_in_container(self, package_dir: str):
         self.cmd.info("Running container...")
-        with run_container(self.cmd, **self.parameters.get_section("docker"), working_dir="/") as container:
+        with run_container(
+            self.cmd, **self.parameters.get_section("docker"), working_dir="/"
+        ) as container:
             self.cmd.info("Coping content")
             copy_to_container(f"{CURRENT_WORK_DIR}/.", f"{container.id}:/")
 
             if self.parameters.get("pre-install-script"):
                 install_in_container_cmd_tmpl = join_cmds(
                     self.parameters.get("pre-install-script"),
-                    INSTALL_IN_CONTAINER_CMD_TMPL
+                    INSTALL_IN_CONTAINER_CMD_TMPL,
                 )
             else:
                 install_in_container_cmd_tmpl = INSTALL_IN_CONTAINER_CMD_TMPL
@@ -384,11 +381,10 @@ class Builder:
                 logger=self.cmd,
                 container=container,
                 entrypoint=self.parameters["docker-entrypoint"],
-                container_cmd=cmd
+                container_cmd=cmd,
             )
             copy_from_container(
-                src=f"{container.id}:{CONTAINER_CACHE_DIR}/.",
-                dst=package_dir
+                src=f"{container.id}:{CONTAINER_CACHE_DIR}/.", dst=package_dir
             )
 
     def _build_package_on_local(self, package_dir: str):
@@ -396,30 +392,24 @@ class Builder:
 
         if self.parameters.get("pre-install-script"):
             install_cmd_tmpl = join_cmds(
-                self.parameters.get("pre-install-script"),
-                INSTALL_CMD_TMPL
+                self.parameters.get("pre-install-script"), INSTALL_CMD_TMPL
             )
         else:
             install_cmd_tmpl = INSTALL_CMD_TMPL
 
-        cmd, print_safe_cmd = self.format_cmd(
-            install_cmd_tmpl,
-            output_dir=package_dir
-        )
-        self.cmd.debug(
-            f"Executing: {print_safe_cmd}")
+        cmd, print_safe_cmd = self.format_cmd(install_cmd_tmpl, output_dir=package_dir)
+        self.cmd.debug(f"Executing: {print_safe_cmd}")
         run_python_cmd("-m", *cmd)
 
     @verify_checksum("package-artifact-path")
     def build_package(self):
         self.cmd.info("Building package...")
-        with TemporaryDirectory() as package_dir:
+        with TemporaryDirectory() as tmp_dir:
             install_dir = self.parameters.get("package-install-dir", "")
-            package_dir = os.path.join(package_dir, install_dir)
+            package_dir = os.path.join(tmp_dir, install_dir)
             os.makedirs(package_dir, exist_ok=True)
             target = os.path.join(
-                CURRENT_WORK_DIR, self.parameters.get(
-                    "package-artifact-path", "")
+                CURRENT_WORK_DIR, self.parameters.get("package-artifact-path", "")
             )
 
             if self.in_container:
@@ -429,11 +419,9 @@ class Builder:
 
             os.makedirs(os.path.dirname(target), exist_ok=True)
             self._create_target(
-                dir=remove_suffix(package_dir, install_dir),
-                target=target
+                dir=remove_suffix(package_dir, install_dir), target=target
             )
-            self.cmd.info(
-                f"target successfully built: {target}...")
+            self.cmd.info(f"target successfully built: {target}...")
 
     def build(self):
         if self._type in (BuildType.IN_CONTAINER_SEPARATED, BuildType.SEPARATED):

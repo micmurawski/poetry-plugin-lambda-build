@@ -16,7 +16,8 @@ class BuildLambdaCommand(EnvCommand):
     description = "Execute to build lambda artifacts"
 
     arguments = [
-        argument(name, *params[:-1]) for name, params in ParametersContainer.ARGS.items()
+        argument(name, *params[:-1])
+        for name, params in ParametersContainer.ARGS.items()
     ]
     options = [
         option(k, None, *params[:-1]) for k, params in ParametersContainer.OPTS.items()
