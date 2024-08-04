@@ -3,7 +3,7 @@ from __future__ import annotations
 import os
 import zipfile
 
-from poetry_plugin_lambda_build.utils import cd, run_python_cmd
+from poetry_plugin_lambda_build.utils import run_python_cmd
 
 
 def run_poetry_cmd(*args: list[str]) -> int:
