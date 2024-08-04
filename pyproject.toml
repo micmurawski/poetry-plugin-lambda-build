@@ -9,14 +9,11 @@ readme = "README.md"
 python = "^3.8"
 docker = "^7.1.0"
 
-[tool.poetry.group.test.dependencies]
+[tool.poetry.group.dev.dependencies]
+ruff = "^0.5.6"
 pytest = "^8.0.1"
 poetry = "^1.7.1"
 pytest-cov = "^5.0.0"
-
-
-[tool.poetry.group.dev.dependencies]
-ruff = "^0.5.6"
 
 [build-system]
 requires = ["poetry-core"]

@@ -55,7 +55,8 @@ class RequirementsExporter:
                     for opt in sorted(invalid_options[group])
                 )
                 message_parts.append(f"{group} (via {opts})")
-            raise GroupNotFound(f"Group(s) not found: {', '.join(message_parts)}")
+            raise GroupNotFound(f"Group(s) not found: {
+                                ', '.join(message_parts)}")
 
     @property
     def activated_groups(self) -> set[str]:
@@ -84,7 +85,8 @@ class RequirementsExporter:
         if package.develop:
             if not allow_editable:
                 self._io.write_error_line(
-                    f"<warning>Warning: {package.pretty_name} is locked in develop"
+                    f"<warning>Warning: {
+                        package.pretty_name} is locked in develop"
                     " (editable) mode, which is incompatible with the"
                     " constraints.txt format.</warning>"
                 )
@@ -192,7 +194,7 @@ class RequirementsExporter:
 
         return content
 
-    def export_indexes(self) -> str:
+    def export_indexes(self) -> list[str]:
         args = []
         has_pypi_repository = any(
             r.name.lower() == "pypi" for r in self._poetry.pool.all_repositories
@@ -205,13 +207,13 @@ class RequirementsExporter:
             url = repository.authenticated_url
             parsed_url = urllib.parse.urlsplit(url)
             if parsed_url.scheme == "http":
-                args.append(f"--trusted-host {parsed_url.netloc}\n")
+                args += ["--trusted-host", f"{parsed_url.netloc}\n"]
             if (
                 not has_pypi_repository
                 and repository is self._poetry.pool.repositories[0]
             ):
-                args.append(f"--index-url {url}")
+                args += ["--index-url", url]
             else:
-                args.append(f"--extra-index-url {url}")
+                args += ["--extra-index-url", url]
 
-        return " ".join(args)
+        return args

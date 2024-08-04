@@ -19,5 +19,5 @@ def test_format_cmd_no_replacement():
 
 def test_format_cmd_with_replacement():
     cmd = ["echo", "{greeting}", "{name}"]
-    expected = ["echo", "Hello,", "World!"]
-    assert format_cmd(cmd, greeting="Hello,", name="World!") == expected
+    expected = ["echo", "Hello,", "Beautiful", "World!"]
+    assert format_cmd(cmd, greeting="Hello,", name=["Beautiful", "World!"]) == expected

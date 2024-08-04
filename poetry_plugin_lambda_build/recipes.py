@@ -174,7 +174,7 @@ class Builder:
         return format_cmd(
             string,
             package_name=self.cmd.poetry.package.name,
-            indexes=indexes.split(" "),
+            indexes=indexes,
             **kwargs,
         ), " ".join(
             format_cmd(

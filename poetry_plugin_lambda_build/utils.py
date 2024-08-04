@@ -96,7 +96,12 @@ def format_cmd(cmd: list[str | list], **kwargs) -> list[str]:
     split_marker = "----"
     return (
         split_marker.join([" ".join(c) if isinstance(c, list) else c for c in cmd])
-        .format(**kwargs)
+        .format(
+            **dict(
+                (k, split_marker.join(v)) if isinstance(v, list) else (k, v)
+                for k, v in kwargs.items()
+            )
+        )
         .split(split_marker)
     )
 
