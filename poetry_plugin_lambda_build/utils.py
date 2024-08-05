@@ -39,7 +39,7 @@ def cd(path):
 
 
 def remove_prefix(text: str, prefix: str) -> str:
-    return text[len(prefix):] if text.startswith(prefix) and prefix else text
+    return text[len(prefix) :] if text.startswith(prefix) and prefix else text
 
 
 def remove_suffix(text: str, suffix: str) -> str:
@@ -50,47 +50,45 @@ def mask_string(s: str) -> str:
     return f'{s[:14]}{"*" * len(s)}'
 
 
-def run_python_cmd(
-    *args: list[str],
-    logger: Logger | None = None,
-    stdout: int = subprocess.PIPE,
-    stderr: int = subprocess.PIPE,
-    **kwargs,
-) -> int:
-    return run_cmd(
-        sys.executable, *args, logger=logger, stdout=stdout, stderr=stderr, **kwargs
-    )
-
-
 def run_cmd(
-    *args: list[str],
+    *cmd: list[str],
     logger: Logger | None = None,
     stdout: int = subprocess.PIPE,
     stderr: int = subprocess.PIPE,
     **kwargs,
 ) -> int:
-    for cmd in cmd_split(args):
-        process = subprocess.Popen(cmd, stdout=stdout, stderr=stderr, **kwargs)
+    process = subprocess.Popen(cmd, stdout=stdout, stderr=stderr, **kwargs)
+    if logger:
+        while process.poll() is None:
+            logger.info(process.stdout.readline().decode())
+    else:
+        while process.poll() is None:
+            sys.stdout.write(process.stdout.readline().decode())
+    _, error = process.communicate()
+
+    if process.returncode != 0:
         if logger:
-            while process.poll() is None:
-                logger.info(process.stdout.readline().decode())
+            logger.error(error.decode())
         else:
-            while process.poll() is None:
-                sys.stdout.write(process.stdout.readline().decode())
+            sys.stderr.write(error.decode())
+        raise RuntimeError(
+            error.decode(),
+            process.returncode,
+        )
+    return process.returncode
 
-        _, error = process.communicate()
 
-        if process.returncode != 0:
-            if logger:
-                logger.error(error.decode())
-            else:
-                sys.stderr.write(error.decode())
-            raise RuntimeError(
-                error.decode(),
-                process.returncode,
-            )
-
-        return process.returncode
+def run_cmds(
+    cmds: list[str],
+    print_safe_cmds: list[str],
+    logger: Logger | None = None,
+    stdout: int = subprocess.PIPE,
+    stderr: int = subprocess.PIPE,
+    **kwargs,
+) -> int:
+    for cmd, print_safe_cmd in zip(cmd_split(cmds), cmd_split(print_safe_cmds)):
+        logger.debug(f"Executing: {' '.join(print_safe_cmd)}")
+        run_cmd(*cmd, logger=logger, stdout=stdout, stderr=stderr, **kwargs)
 
 
 def format_cmd(cmd: list[str], **kwargs) -> list[str]:
@@ -129,8 +127,7 @@ def compute_checksum(path: str | Path, exclude: None | list[str | Path] = None) 
             for file_read in files:
                 full_path = os.path.join(root, file_read)
                 if not reduce(
-                    or_, [fnmatch(full_path, pattern)
-                          for pattern in exclude], False
+                    or_, [fnmatch(full_path, pattern) for pattern in exclude], False
                 ):
                     m.update(str(os.stat(full_path)).encode())
     else:
