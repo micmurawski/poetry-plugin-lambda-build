@@ -10,10 +10,22 @@ from functools import reduce
 from logging import Logger
 from operator import or_
 from pathlib import Path
+from typing import Generator
 
 
 def join_cmds(*cmds: list[list[str]], joiner: str = " && ") -> list[str]:
-    return joiner.join([" ".join(cmd) for cmd in cmds]).split(" ")
+    return joiner.join([" ".join(cmd) for cmd in cmds if cmd]).split(" ")
+
+
+def cmd_split(cmd: list[str], separator="&&") -> Generator[None, None, list[str]]:
+    result = []
+    for c in cmd:
+        if c == separator:
+            yield result
+            result = []
+        else:
+            result.append(c)
+    yield result
 
 
 @contextmanager
@@ -38,33 +50,20 @@ def mask_string(s: str) -> str:
     return f'{s[:14]}{"*" * len(s)}'
 
 
-def run_python_cmd(
-    *args: list[str],
-    logger: Logger | None = None,
-    stdout: int = subprocess.PIPE,
-    stderr: int = subprocess.PIPE,
-    **kwargs,
-) -> int:
-    return run_cmd(
-        sys.executable, *args, logger=logger, stdout=stdout, stderr=stderr, **kwargs
-    )
-
-
 def run_cmd(
-    *args: list[str],
+    *cmd: list[str],
     logger: Logger | None = None,
     stdout: int = subprocess.PIPE,
     stderr: int = subprocess.PIPE,
     **kwargs,
 ) -> int:
-    process = subprocess.Popen(args, stdout=stdout, stderr=stderr, **kwargs)
+    process = subprocess.Popen(cmd, stdout=stdout, stderr=stderr, **kwargs)
     if logger:
         while process.poll() is None:
             logger.info(process.stdout.readline().decode())
     else:
         while process.poll() is None:
             sys.stdout.write(process.stdout.readline().decode())
-
     _, error = process.communicate()
 
     if process.returncode != 0:
@@ -76,8 +75,20 @@ def run_cmd(
             error.decode(),
             process.returncode,
         )
-
     return process.returncode
+
+
+def run_cmds(
+    cmds: list[str],
+    print_safe_cmds: list[str],
+    logger: Logger,
+    stdout: int = subprocess.PIPE,
+    stderr: int = subprocess.PIPE,
+    **kwargs,
+) -> int:
+    for cmd, print_safe_cmd in zip(cmd_split(cmds), cmd_split(print_safe_cmds)):
+        logger.debug(f"Executing: {' '.join(print_safe_cmd)}")
+        run_cmd(*cmd, logger=logger, stdout=stdout, stderr=stderr, **kwargs)
 
 
 def format_cmd(cmd: list[str], **kwargs) -> list[str]:

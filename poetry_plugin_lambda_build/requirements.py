@@ -55,8 +55,7 @@ class RequirementsExporter:
                     for opt in sorted(invalid_options[group])
                 )
                 message_parts.append(f"{group} (via {opts})")
-            raise GroupNotFound(f"Group(s) not found: {
-                                ', '.join(message_parts)}")
+            raise GroupNotFound(f"Group(s) not found: {', '.join(message_parts)}")
 
     @property
     def activated_groups(self) -> set[str]:
@@ -85,8 +84,7 @@ class RequirementsExporter:
         if package.develop:
             if not allow_editable:
                 self._io.write_error_line(
-                    f"<warning>Warning: {
-                        package.pretty_name} is locked in develop"
+                    f"<warning>Warning: {package.pretty_name} is locked in develop"
                     " (editable) mode, which is incompatible with the"
                     " constraints.txt format.</warning>"
                 )

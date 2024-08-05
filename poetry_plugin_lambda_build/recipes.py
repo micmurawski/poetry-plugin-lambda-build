@@ -27,14 +27,13 @@ from poetry_plugin_lambda_build.parameters import ParametersContainer
 from poetry_plugin_lambda_build.requirements import RequirementsExporter
 from poetry_plugin_lambda_build.utils import (
     format_cmd,
-    join_cmds,
     mask_string,
     remove_suffix,
-    run_python_cmd,
+    run_cmds,
+    join_cmds,
 )
 from poetry_plugin_lambda_build.zip import create_zip_package
-
-from .utils import compute_checksum
+from poetry_plugin_lambda_build.utils import compute_checksum
 
 CONTAINER_CACHE_DIR = "/opt/lambda/cache"
 CURRENT_WORK_DIR = os.getcwd()
@@ -170,20 +169,21 @@ class Builder:
 
     def format_cmd(self, string: str, **kwargs) -> tuple[list[str], str]:
         indexes = get_indexes(self.cmd, self.parameters)
-
-        return format_cmd(
+        cmd = format_cmd(
             string,
             package_name=self.cmd.poetry.package.name,
             indexes=indexes,
             **kwargs,
-        ), " ".join(
-            format_cmd(
-                string,
-                package_name=self.cmd.poetry.package.name,
-                indexes=mask_string(indexes),
-                **kwargs,
-            )
         )
+
+        print_safe_cmd = format_cmd(
+            string,
+            package_name=self.cmd.poetry.package.name,
+            indexes=mask_string(" ".join(indexes)),
+            **kwargs,
+        )
+
+        return cmd, print_safe_cmd
 
     def _build_separate_layer_in_container(
         self, requirements_path: str, layer_output_dir: str
@@ -197,25 +197,21 @@ class Builder:
             )
             self.cmd.info("Installing requirements")
 
-            if self.parameters.get("pre-install-script"):
-                install_deps_cmd_in_container_tmpl = join_cmds(
-                    self.parameters.get("pre_install_script"),
-                    INSTALL_DEPS_CMD_IN_CONTAINER_TMPL,
-                )
-            else:
-                install_deps_cmd_in_container_tmpl = INSTALL_DEPS_CMD_IN_CONTAINER_TMPL
-
+            install_deps_cmd_in_container_tmpl = join_cmds(
+                self.parameters.get("pre-install-script"),
+                INSTALL_DEPS_CMD_IN_CONTAINER_TMPL,
+            )
             cmd, print_safe_cmd = self.format_cmd(
                 install_deps_cmd_in_container_tmpl,
                 output_dir=CONTAINER_CACHE_DIR,
                 requirements="/requirements.txt",
             )
-            self.cmd.debug(f"Executing: {print_safe_cmd}")
+
             exec_run_container(
                 logger=self.cmd,
                 container=container,
-                entrypoint=self.parameters["docker-entrypoint"],
                 container_cmd=cmd,
+                print_safe_cmds=print_safe_cmd,
             )
             self.cmd.info(f"Coping output to {layer_output_dir}")
             copy_from_container(
@@ -247,8 +243,8 @@ class Builder:
             output_dir=layer_output_dir,
             requirements=requirements_path,
         )
-        self.cmd.info(f"Executing: {''.join(print_safe_cmd)}")
-        run_python_cmd("-m", *cmd, logger=self.cmd)
+
+        run_cmds(cmds=cmd, print_safe_cmds=print_safe_cmd, logger=self.cmd)
 
     @verify_checksum("layer-artifact-path")
     def build_separate_layer_package(self):
@@ -293,24 +289,17 @@ class Builder:
             self.cmd, **self.parameters.get_section("docker"), working_dir="/"
         ) as container:
             copy_to_container(src=f"{CURRENT_WORK_DIR}/.", dst=f"{container.id}:/")
-            if self.parameters.get("pre-install-script"):
-                install_in_container_no_deps_cmd_tmpl = join_cmds(
-                    self.parameters.get("pre-install-script"),
-                    INSTALL_IN_CONTAINER_NO_DEPS_CMD_TMPL,
-                )
-            else:
-                install_in_container_no_deps_cmd_tmpl = (
-                    INSTALL_IN_CONTAINER_NO_DEPS_CMD_TMPL
-                )
+
+            install_in_container_no_deps_cmd_tmpl = join_cmds(
+                self.parameters.get("pre-install-script"),
+                INSTALL_IN_CONTAINER_NO_DEPS_CMD_TMPL,
+            )
 
             cmd, print_safe_cmd = self.format_cmd(
                 install_in_container_no_deps_cmd_tmpl, output_dir=CONTAINER_CACHE_DIR
             )
 
-            self.cmd.info(f"Executing: {print_safe_cmd}")
-            exec_run_container(
-                self.cmd, container, self.parameters["docker-entrypoint"], cmd
-            )
+            exec_run_container(self.cmd, container, cmd, print_safe_cmd)
             copy_from_container(
                 src=f"{container.id}:{CONTAINER_CACHE_DIR}/.", dst=package_dir
             )
@@ -318,18 +307,15 @@ class Builder:
     def _build_separated_function_on_local(self, package_dir: str):
         os.makedirs(package_dir, exist_ok=True)
 
-        if self.parameters.get("pre-install-script"):
-            install_no_deps_cmd_tmpl = join_cmds(
-                self.parameters.get("pre-install-script"), INSTALL_NO_DEPS_CMD_TMPL
-            )
-        else:
-            install_no_deps_cmd_tmpl = INSTALL_NO_DEPS_CMD_TMPL
+        install_no_deps_cmd_tmpl = join_cmds(
+            self.parameters.get("pre-install-script"), INSTALL_NO_DEPS_CMD_TMPL
+        )
         cmd, print_safe_cmd = self.format_cmd(
             install_no_deps_cmd_tmpl,
             output_dir=package_dir,
         )
-        self.cmd.debug(f"Executing: {print_safe_cmd}")
-        run_python_cmd("-m", *cmd, logger=self.cmd)
+
+        run_cmds(cmds=cmd, print_safe_cmds=print_safe_cmd, logger=self.cmd)
 
     @verify_checksum("function-artifact-path")
     def build_separated_function_package(self):
@@ -362,26 +348,19 @@ class Builder:
             self.cmd.info("Coping content")
             copy_to_container(f"{CURRENT_WORK_DIR}/.", f"{container.id}:/")
 
-            if self.parameters.get("pre-install-script"):
-                install_in_container_cmd_tmpl = join_cmds(
-                    self.parameters.get("pre-install-script"),
-                    INSTALL_IN_CONTAINER_CMD_TMPL,
-                )
-            else:
-                install_in_container_cmd_tmpl = INSTALL_IN_CONTAINER_CMD_TMPL
-
+            install_in_container_cmd_tmpl = join_cmds(
+                self.parameters.get("pre-install-script"), INSTALL_IN_CONTAINER_CMD_TMPL
+            )
             cmd, print_safe_cmd = self.format_cmd(
                 install_in_container_cmd_tmpl,
                 output_dir=CONTAINER_CACHE_DIR,
             )
 
-            self.cmd.debug(f"Executing: {print_safe_cmd}")
-
             exec_run_container(
                 logger=self.cmd,
                 container=container,
-                entrypoint=self.parameters["docker-entrypoint"],
                 container_cmd=cmd,
+                print_safe_cmds=print_safe_cmd,
             )
             copy_from_container(
                 src=f"{container.id}:{CONTAINER_CACHE_DIR}/.", dst=package_dir
@@ -390,16 +369,13 @@ class Builder:
     def _build_package_on_local(self, package_dir: str):
         self.cmd.info("Building package on local")
 
-        if self.parameters.get("pre-install-script"):
-            install_cmd_tmpl = join_cmds(
-                self.parameters.get("pre-install-script"), INSTALL_CMD_TMPL
-            )
-        else:
-            install_cmd_tmpl = INSTALL_CMD_TMPL
+        install_cmd_tmpl = join_cmds(
+            self.parameters.get("pre-install-script"), INSTALL_CMD_TMPL
+        )
 
         cmd, print_safe_cmd = self.format_cmd(install_cmd_tmpl, output_dir=package_dir)
-        self.cmd.debug(f"Executing: {print_safe_cmd}")
-        run_python_cmd("-m", *cmd)
+
+        run_cmds(cmds=cmd, print_safe_cmds=print_safe_cmd, logger=self.cmd)
 
     @verify_checksum("package-artifact-path")
     def build_package(self):

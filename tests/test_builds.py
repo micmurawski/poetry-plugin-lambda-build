@@ -22,8 +22,7 @@ from tests.utils import (
 def env_vars():
     if platform.system() == "Darwin":
         user = os.environ["USER"]
-        os.environ["DOCKER_HOST"] = f"unix:///Users/{
-            user}/.docker/run/docker.sock"
+        os.environ["DOCKER_HOST"] = f"unix:///Users/{user}/.docker/run/docker.sock"
     yield
 
 
@@ -196,6 +195,12 @@ def test_zip_builds(config: dict, args: dict, assert_files: list, tmp_path: Path
             assert run_poetry_cmd("add", "requests") == 0
             assert run_poetry_cmd("add", "pytest", "--group=test") == 0
             open(handler_file, "w").close()
+
+            if PYTHON_VER == "3.8":
+                config["pre-install-script"] = (
+                    "python3 -m pip install urllib3<2.0 -U -q"
+                )
+
             if config:
                 update_pyproject_toml(**config)
             arguments = " ".join(f"{k}={v}" for k, v in args.items())
@@ -217,6 +222,12 @@ def test_dir_builds(config: dict, args: dict, assert_files: list, tmp_path: Path
             assert run_poetry_cmd("add", "requests") == 0
             assert run_poetry_cmd("add", "pytest", "--group=test") == 0
             open(handler_file, "w").close()
+
+            if PYTHON_VER == "3.8":
+                config["pre-install-script"] = (
+                    "python3 -m pip install urllib3<2.0 -U -q"
+                )
+
             if config:
                 update_pyproject_toml(**config)
             arguments = " ".join(f"{k}={v}" for k, v in args.items())

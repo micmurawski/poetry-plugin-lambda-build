@@ -2,12 +2,26 @@ from __future__ import annotations
 
 import os
 import zipfile
+import subprocess
+from logging import Logger
+import sys
+from poetry_plugin_lambda_build.utils import run_cmd, remove_prefix
 
-from poetry_plugin_lambda_build.utils import run_python_cmd
+
+def run_python_cmd(
+    *cmd: list[str],
+    logger: Logger | None = None,
+    stdout: int = subprocess.PIPE,
+    stderr: int = subprocess.PIPE,
+    **kwargs,
+) -> int:
+    return run_cmd(
+        sys.executable, *cmd, logger=logger, stdout=stdout, stderr=stderr, **kwargs
+    )
 
 
-def run_poetry_cmd(*args: list[str]) -> int:
-    return run_python_cmd("-m", "poetry", *args)
+def run_poetry_cmd(*cmd: list[str]) -> int:
+    return run_python_cmd("-m", "poetry", *cmd)
 
 
 def update_pyproject_toml(**kwargs):
@@ -20,7 +34,7 @@ def update_pyproject_toml(**kwargs):
 def assert_file_exists_in_dir(dirname: str, base_path: str = None, files: list = None):
     _files = []
     for _base, __, __files in os.walk(dirname):
-        _base = _base.removeprefix(dirname + "/")
+        _base = remove_prefix(_base, dirname + "/")
         _files += [os.path.join(_base, f) for f in __files]
     _files = set(_files)
 
@@ -39,7 +53,7 @@ def assert_file_exists_in_dir(dirname: str, base_path: str = None, files: list =
 def assert_file_not_exists_in_dir(dirname: str, files: list = None):
     _files = []
     for _base, __, __files in os.walk(dirname):
-        _base = _base.removeprefix(dirname + "/")
+        _base = remove_prefix(_base, dirname + "/")
         _files += [os.path.join(_base, f) for f in __files]
     _files = set(_files)
 
