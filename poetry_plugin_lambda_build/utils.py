@@ -13,9 +13,8 @@ from pathlib import Path
 
 
 def join_cmds(*cmds: list[list[str]], joiner: str = " && ") -> list[str]:
-    split_marker = "----"
-    return joiner.join([split_marker.join(cmd) for cmd in cmds if cmd]).split(
-        split_marker
+    return joiner.join([" ".join(cmd) for cmd in cmds if cmd]).split(
+        " "
     )
 
 
@@ -75,6 +74,7 @@ def run_cmd(
             logger.error(error.decode())
         else:
             sys.stderr.write(error.decode())
+        print(args)
         raise RuntimeError(
             error.decode(),
             process.returncode,

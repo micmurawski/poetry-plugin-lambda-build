@@ -197,12 +197,15 @@ def test_zip_builds(config: dict, args: dict, assert_files: list, tmp_path: Path
             open(handler_file, "w").close()
 
             if PYTHON_VER == "3.8":
-                config["pre-install-script"] = "pip install urllib3==1.26.7 -U -q"
+                config["pre-install-script"] = "python3 -m pip install urllib3==1.26.7 -U -q"
 
             if config:
                 update_pyproject_toml(**config)
             arguments = " ".join(f"{k}={v}" for k, v in args.items())
-            assert run_poetry_cmd("build-lambda", arguments, "-v") == 0
+            if arguments:
+                assert run_poetry_cmd("build-lambda", arguments, "-v") == 0
+            else:
+                assert run_poetry_cmd("build-lambda", "-v") == 0
             for files_assertion in assert_files:
                 files_assertion()
 
@@ -229,6 +232,9 @@ def test_dir_builds(config: dict, args: dict, assert_files: list, tmp_path: Path
             if config:
                 update_pyproject_toml(**config)
             arguments = " ".join(f"{k}={v}" for k, v in args.items())
-            assert run_poetry_cmd("build-lambda", arguments, "-v") == 0
+            if arguments:
+                assert run_poetry_cmd("build-lambda", arguments, "-v") == 0
+            else:
+                assert run_poetry_cmd("build-lambda", "-v") == 0
             for files_assertion in assert_files:
                 files_assertion()
