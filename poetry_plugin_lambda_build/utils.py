@@ -10,10 +10,22 @@ from functools import reduce
 from logging import Logger
 from operator import or_
 from pathlib import Path
+from typing import Generator
 
 
 def join_cmds(*cmds: list[list[str]], joiner: str = " && ") -> list[str]:
     return joiner.join([" ".join(cmd) for cmd in cmds if cmd]).split(" ")
+
+
+def cmd_split(cmd: list[str], separator="&&") -> Generator[None, None, list[str]]:
+    result = []
+    for c in cmd:
+        if c == separator:
+            yield result
+            result = []
+        else:
+            result.append(c)
+    yield result
 
 
 @contextmanager
@@ -27,7 +39,7 @@ def cd(path):
 
 
 def remove_prefix(text: str, prefix: str) -> str:
-    return text[len(prefix) :] if text.startswith(prefix) and prefix else text
+    return text[len(prefix):] if text.startswith(prefix) and prefix else text
 
 
 def remove_suffix(text: str, suffix: str) -> str:
@@ -57,27 +69,28 @@ def run_cmd(
     stderr: int = subprocess.PIPE,
     **kwargs,
 ) -> int:
-    process = subprocess.Popen(args, stdout=stdout, stderr=stderr, **kwargs)
-    if logger:
-        while process.poll() is None:
-            logger.info(process.stdout.readline().decode())
-    else:
-        while process.poll() is None:
-            sys.stdout.write(process.stdout.readline().decode())
-
-    _, error = process.communicate()
-
-    if process.returncode != 0:
+    for cmd in cmd_split(args):
+        process = subprocess.Popen(cmd, stdout=stdout, stderr=stderr, **kwargs)
         if logger:
-            logger.error(error.decode())
+            while process.poll() is None:
+                logger.info(process.stdout.readline().decode())
         else:
-            sys.stderr.write(error.decode())
-        raise RuntimeError(
-            error.decode(),
-            process.returncode,
-        )
+            while process.poll() is None:
+                sys.stdout.write(process.stdout.readline().decode())
 
-    return process.returncode
+        _, error = process.communicate()
+
+        if process.returncode != 0:
+            if logger:
+                logger.error(error.decode())
+            else:
+                sys.stderr.write(error.decode())
+            raise RuntimeError(
+                error.decode(),
+                process.returncode,
+            )
+
+        return process.returncode
 
 
 def format_cmd(cmd: list[str], **kwargs) -> list[str]:
@@ -116,7 +129,8 @@ def compute_checksum(path: str | Path, exclude: None | list[str | Path] = None) 
             for file_read in files:
                 full_path = os.path.join(root, file_read)
                 if not reduce(
-                    or_, [fnmatch(full_path, pattern) for pattern in exclude], False
+                    or_, [fnmatch(full_path, pattern)
+                          for pattern in exclude], False
                 ):
                     m.update(str(os.stat(full_path)).encode())
     else:

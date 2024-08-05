@@ -198,7 +198,7 @@ def test_zip_builds(config: dict, args: dict, assert_files: list, tmp_path: Path
 
             if PYTHON_VER == "3.8":
                 config["pre-install-script"] = (
-                    "python3 -m pip install urllib3==1.26.7 -U -q"
+                    "python3 -m pip install urllib3<2.0 -U -q"
                 )
 
             if config:
@@ -225,7 +225,7 @@ def test_dir_builds(config: dict, args: dict, assert_files: list, tmp_path: Path
 
             if PYTHON_VER == "3.8":
                 config["pre-install-script"] = (
-                    "python3 -m pip install urllib3==1.26.7 -U -q"
+                    "python3 -m pip install urllib3<2.0 -U -q"
                 )
 
             if config:

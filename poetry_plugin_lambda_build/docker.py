@@ -9,7 +9,7 @@ from typing import Generator
 import docker
 from docker.models.containers import Container
 
-from poetry_plugin_lambda_build.utils import cd
+from poetry_plugin_lambda_build.utils import cd, cmd_split
 
 
 def _parse_str_to_list(value: str) -> list[str]:
@@ -87,17 +87,17 @@ def run_container(logger, **kwargs) -> Generator[Container, None, None]:
 def exec_run_container(
     logger, container: Container, entrypoint: str, container_cmd: list[str]
 ):
-    cmd = " ".join(container_cmd)
-    exit_code, stream = container.exec_run(
-        f'{entrypoint} -c "{cmd}"',
-        stdout=True,
-        stderr=True,
-        stream=True,
-    )
-    for line in stream:
-        logger.info(line.strip().decode())
-
-    if exit_code and exit_code != 0:
-        raise RuntimeError(
-            f"Exec run in container resulted with exit code: {exit_code}"
+    for cmd in cmd_split(container_cmd):
+        exit_code, stream = container.exec_run(
+            cmd,
+            stdout=True,
+            stderr=True,
+            stream=True,
         )
+        for line in stream:
+            logger.info(line.strip().decode())
+
+        if exit_code and exit_code != 0:
+            raise RuntimeError(
+                f"Exec run in container resulted with exit code: {exit_code}"
+            )
