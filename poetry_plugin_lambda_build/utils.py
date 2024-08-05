@@ -72,7 +72,6 @@ def run_cmd(
             logger.error(error.decode())
         else:
             sys.stderr.write(error.decode())
-        print(args)
         raise RuntimeError(
             error.decode(),
             process.returncode,
