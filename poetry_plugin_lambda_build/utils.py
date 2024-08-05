@@ -81,7 +81,7 @@ def run_cmd(
 def run_cmds(
     cmds: list[str],
     print_safe_cmds: list[str],
-    logger: Logger | None = None,
+    logger: Logger,
     stdout: int = subprocess.PIPE,
     stderr: int = subprocess.PIPE,
     **kwargs,
