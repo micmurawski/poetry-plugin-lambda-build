@@ -135,7 +135,7 @@ ARGS = {
         True,
         False,
         None,
-        str,
+        lambda x: x.split(" "),
     ),
 }
 

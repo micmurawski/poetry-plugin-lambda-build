@@ -180,7 +180,7 @@ class Builder:
             format_cmd(
                 string,
                 package_name=self.cmd.poetry.package.name,
-                indexes=mask_string(indexes),
+                indexes=mask_string(" ".join(indexes)),
                 **kwargs,
             )
         )
@@ -197,13 +197,10 @@ class Builder:
             )
             self.cmd.info("Installing requirements")
 
-            if self.parameters.get("pre-install-script"):
-                install_deps_cmd_in_container_tmpl = join_cmds(
-                    self.parameters.get("pre_install_script"),
-                    INSTALL_DEPS_CMD_IN_CONTAINER_TMPL,
-                )
-            else:
-                install_deps_cmd_in_container_tmpl = INSTALL_DEPS_CMD_IN_CONTAINER_TMPL
+            install_deps_cmd_in_container_tmpl = join_cmds(
+                self.parameters.get("pre-install-script"),
+                INSTALL_DEPS_CMD_IN_CONTAINER_TMPL,
+            )
 
             cmd, print_safe_cmd = self.format_cmd(
                 install_deps_cmd_in_container_tmpl,
@@ -293,15 +290,10 @@ class Builder:
             self.cmd, **self.parameters.get_section("docker"), working_dir="/"
         ) as container:
             copy_to_container(src=f"{CURRENT_WORK_DIR}/.", dst=f"{container.id}:/")
-            if self.parameters.get("pre-install-script"):
-                install_in_container_no_deps_cmd_tmpl = join_cmds(
-                    self.parameters.get("pre-install-script"),
-                    INSTALL_IN_CONTAINER_NO_DEPS_CMD_TMPL,
-                )
-            else:
-                install_in_container_no_deps_cmd_tmpl = (
-                    INSTALL_IN_CONTAINER_NO_DEPS_CMD_TMPL
-                )
+            install_in_container_no_deps_cmd_tmpl = join_cmds(
+                self.parameters.get("pre-install-script"),
+                INSTALL_IN_CONTAINER_NO_DEPS_CMD_TMPL,
+            )
 
             cmd, print_safe_cmd = self.format_cmd(
                 install_in_container_no_deps_cmd_tmpl, output_dir=CONTAINER_CACHE_DIR
@@ -318,12 +310,10 @@ class Builder:
     def _build_separated_function_on_local(self, package_dir: str):
         os.makedirs(package_dir, exist_ok=True)
 
-        if self.parameters.get("pre-install-script"):
-            install_no_deps_cmd_tmpl = join_cmds(
-                self.parameters.get("pre-install-script"), INSTALL_NO_DEPS_CMD_TMPL
-            )
-        else:
-            install_no_deps_cmd_tmpl = INSTALL_NO_DEPS_CMD_TMPL
+        install_no_deps_cmd_tmpl = join_cmds(
+            self.parameters.get("pre-install-script"), INSTALL_NO_DEPS_CMD_TMPL
+        )
+
         cmd, print_safe_cmd = self.format_cmd(
             install_no_deps_cmd_tmpl,
             output_dir=package_dir,
@@ -362,13 +352,10 @@ class Builder:
             self.cmd.info("Coping content")
             copy_to_container(f"{CURRENT_WORK_DIR}/.", f"{container.id}:/")
 
-            if self.parameters.get("pre-install-script"):
-                install_in_container_cmd_tmpl = join_cmds(
-                    self.parameters.get("pre-install-script"),
-                    INSTALL_IN_CONTAINER_CMD_TMPL,
-                )
-            else:
-                install_in_container_cmd_tmpl = INSTALL_IN_CONTAINER_CMD_TMPL
+            install_in_container_cmd_tmpl = join_cmds(
+                self.parameters.get("pre-install-script"),
+                INSTALL_IN_CONTAINER_CMD_TMPL,
+            )
 
             cmd, print_safe_cmd = self.format_cmd(
                 install_in_container_cmd_tmpl,
@@ -390,12 +377,9 @@ class Builder:
     def _build_package_on_local(self, package_dir: str):
         self.cmd.info("Building package on local")
 
-        if self.parameters.get("pre-install-script"):
-            install_cmd_tmpl = join_cmds(
-                self.parameters.get("pre-install-script"), INSTALL_CMD_TMPL
-            )
-        else:
-            install_cmd_tmpl = INSTALL_CMD_TMPL
+        install_cmd_tmpl = join_cmds(
+            self.parameters.get("pre-install-script"), INSTALL_CMD_TMPL
+        )
 
         cmd, print_safe_cmd = self.format_cmd(install_cmd_tmpl, output_dir=package_dir)
         self.cmd.debug(f"Executing: {print_safe_cmd}")

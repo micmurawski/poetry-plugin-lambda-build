@@ -3,7 +3,7 @@ from __future__ import annotations
 import os
 import zipfile
 
-from poetry_plugin_lambda_build.utils import run_python_cmd
+from poetry_plugin_lambda_build.utils import run_python_cmd, remove_prefix
 
 
 def run_poetry_cmd(*args: list[str]) -> int:
@@ -20,7 +20,7 @@ def update_pyproject_toml(**kwargs):
 def assert_file_exists_in_dir(dirname: str, base_path: str = None, files: list = None):
     _files = []
     for _base, __, __files in os.walk(dirname):
-        _base = _base.removeprefix(dirname + "/")
+        _base = remove_prefix(_base, dirname + "/")
         _files += [os.path.join(_base, f) for f in __files]
     _files = set(_files)
 
@@ -39,7 +39,7 @@ def assert_file_exists_in_dir(dirname: str, base_path: str = None, files: list =
 def assert_file_not_exists_in_dir(dirname: str, files: list = None):
     _files = []
     for _base, __, __files in os.walk(dirname):
-        _base = _base.removeprefix(dirname + "/")
+        _base = remove_prefix(_base, dirname + "/")
         _files += [os.path.join(_base, f) for f in __files]
     _files = set(_files)
 
