@@ -2,12 +2,26 @@ from __future__ import annotations
 
 import os
 import zipfile
+import subprocess
+from logging import Logger
+import sys
+from poetry_plugin_lambda_build.utils import run_cmd, remove_prefix
 
-from poetry_plugin_lambda_build.utils import run_python_cmd, remove_prefix
+
+def run_python_cmd(
+    *cmd: list[str],
+    logger: Logger | None = None,
+    stdout: int = subprocess.PIPE,
+    stderr: int = subprocess.PIPE,
+    **kwargs,
+) -> int:
+    return run_cmd(
+        sys.executable, *cmd, logger=logger, stdout=stdout, stderr=stderr, **kwargs
+    )
 
 
-def run_poetry_cmd(*args: list[str]) -> int:
-    return run_python_cmd("-m", "poetry", *args)
+def run_poetry_cmd(*cmd: list[str]) -> int:
+    return run_python_cmd("-m", "poetry", *cmd)
 
 
 def update_pyproject_toml(**kwargs):
