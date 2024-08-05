@@ -13,9 +13,7 @@ from pathlib import Path
 
 
 def join_cmds(*cmds: list[list[str]], joiner: str = " && ") -> list[str]:
-    return joiner.join([" ".join(cmd) for cmd in cmds if cmd]).split(
-        " "
-    )
+    return joiner.join([" ".join(cmd) for cmd in cmds if cmd]).split(" ")
 
 
 @contextmanager

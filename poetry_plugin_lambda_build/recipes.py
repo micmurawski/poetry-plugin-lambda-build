@@ -30,7 +30,7 @@ from poetry_plugin_lambda_build.utils import (
     join_cmds,
     mask_string,
     remove_suffix,
-    run_cmd
+    run_cmd,
 )
 from poetry_plugin_lambda_build.zip import create_zip_package
 
@@ -140,14 +140,12 @@ def verify_checksum(param):
                 if is_zip:
                     with zipfile.ZipFile(target, "a") as zipf:
                         zipf.write(
-                            checksum_file_path, os.path.join(
-                                install_dir, "checksum")
+                            checksum_file_path, os.path.join(install_dir, "checksum")
                         )
                 else:
                     shutil.copyfile(
                         checksum_file_path,
-                        os.path.join(CURRENT_WORK_DIR, target,
-                                     install_dir, "checksum"),
+                        os.path.join(CURRENT_WORK_DIR, target, install_dir, "checksum"),
                     )
 
             return retval
@@ -256,8 +254,7 @@ class Builder:
             install_dir = self.parameters.get("layer-install-dir", "")
             layer_output_dir = os.path.join(tmp_dir, "layer-output")
             target = os.path.join(
-                CURRENT_WORK_DIR, self.parameters.get(
-                    "layer-artifact-path", "")
+                CURRENT_WORK_DIR, self.parameters.get("layer-artifact-path", "")
             )
             requirements_path = os.path.join(tmp_dir, "requirements.txt")
             layer_output_dir = os.path.join(layer_output_dir, install_dir)
@@ -292,8 +289,7 @@ class Builder:
         with run_container(
             self.cmd, **self.parameters.get_section("docker"), working_dir="/"
         ) as container:
-            copy_to_container(
-                src=f"{CURRENT_WORK_DIR}/.", dst=f"{container.id}:/")
+            copy_to_container(src=f"{CURRENT_WORK_DIR}/.", dst=f"{container.id}:/")
             install_in_container_no_deps_cmd_tmpl = join_cmds(
                 self.parameters.get("pre-install-script"),
                 INSTALL_IN_CONTAINER_NO_DEPS_CMD_TMPL,
@@ -335,8 +331,7 @@ class Builder:
             install_dir = self.parameters.get("function-install-dir", "")
             package_dir = tmp_dir
             target = os.path.join(
-                CURRENT_WORK_DIR, self.parameters.get(
-                    "function-artifact-path", "")
+                CURRENT_WORK_DIR, self.parameters.get("function-artifact-path", "")
             )
             package_dir = os.path.join(package_dir, install_dir)
             if self.in_container:
@@ -392,8 +387,7 @@ class Builder:
             self.cmd.debug(f"Executing: {print_safe_cmd}")
             run_cmd(*cmd, logger=self.cmd)
 
-        cmd, print_safe_cmd = self.format_cmd(
-            INSTALL_CMD_TMPL, output_dir=package_dir)
+        cmd, print_safe_cmd = self.format_cmd(INSTALL_CMD_TMPL, output_dir=package_dir)
         self.cmd.debug(f"Executing: {print_safe_cmd}")
         run_cmd(*cmd, logger=self.cmd)
 
@@ -405,8 +399,7 @@ class Builder:
             package_dir = os.path.join(tmp_dir, install_dir)
             os.makedirs(package_dir, exist_ok=True)
             target = os.path.join(
-                CURRENT_WORK_DIR, self.parameters.get(
-                    "package-artifact-path", "")
+                CURRENT_WORK_DIR, self.parameters.get("package-artifact-path", "")
             )
 
             if self.in_container:
