@@ -14,10 +14,11 @@ from typing import Generator
 
 
 def join_cmds(*cmds: list[list[str]], joiner: str = "&&") -> list[str]:
+    _cmds = list(filter(lambda x: x, cmds))
     result = []
-    for i, cmd in enumerate(filter(lambda x: x, cmds)):
+    for i, cmd in enumerate(_cmds):
         result += cmd
-        if i < len(cmds) - 1:
+        if i < len(_cmds) - 1:
             result.append(joiner)
     return result
 
