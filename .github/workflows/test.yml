@@ -13,6 +13,12 @@ jobs:
     uses: ./.github/workflows/run_tests_linux.yml
     with:
       python-version: "3.12"
+  test_macos_python312:
+    secrets: inherit
+    uses: ./.github/workflows/run_tests_linux.yml
+    with:
+      python-version: "3.12"
+      runs-on: "macos-latest"
   test_windows_python312:
     secrets: inherit
     uses: ./.github/workflows/run_tests_windows.yml

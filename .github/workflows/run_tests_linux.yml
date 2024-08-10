@@ -11,10 +11,10 @@ on:
 
 jobs:
   tests:
-    name: Run Tests for python${{ inputs.python-version }} on ${{ inputs.runs-on }}
+    name: Test for python${{ inputs.python-version }} on ${{ inputs.runs-on }}
     runs-on: ${{ inputs.runs-on }}
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
