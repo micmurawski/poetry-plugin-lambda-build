@@ -136,7 +136,7 @@ ARGS = {
         True,
         False,
         None,
-        lambda x: shlex.split(x),
+        shlex.split,
     ),
 }
 

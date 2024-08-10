@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import hashlib
 import os
-import shlex
 import subprocess
 import sys
 from contextlib import contextmanager
@@ -14,8 +13,13 @@ from pathlib import Path
 from typing import Generator
 
 
-def join_cmds(*cmds: list[list[str]], joiner: str = " && ") -> list[str]:
-    return shlex.split(joiner.join([" ".join(cmd) for cmd in cmds if cmd]))
+def join_cmds(*cmds: list[list[str]], joiner: str = "&&") -> list[str]:
+    result = []
+    for i, cmd in enumerate(filter(lambda x: x, cmds)):
+        result += cmd
+        if i < len(cmds) - 1:
+            result.append(joiner)
+    return result
 
 
 def cmd_split(cmd: list[str], separator="&&") -> Generator[None, None, list[str]]:
