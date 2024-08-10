@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import shlex
 from typing import Any
 
 from poetry.console.exceptions import PoetryConsoleError
@@ -135,7 +136,7 @@ ARGS = {
         True,
         False,
         None,
-        lambda x: x.split(" "),
+        lambda x: shlex.split(x),
     ),
 }
 

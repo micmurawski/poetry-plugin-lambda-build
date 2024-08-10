@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import os
+import shlex
 import subprocess
 import sys
 from contextlib import contextmanager
@@ -14,7 +15,7 @@ from typing import Generator
 
 
 def join_cmds(*cmds: list[list[str]], joiner: str = " && ") -> list[str]:
-    return joiner.join([" ".join(cmd) for cmd in cmds if cmd]).split(" ")
+    return shlex.split(joiner.join([" ".join(cmd) for cmd in cmds if cmd]))
 
 
 def cmd_split(cmd: list[str], separator="&&") -> Generator[None, None, list[str]]:
