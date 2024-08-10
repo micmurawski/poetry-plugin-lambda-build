@@ -21,16 +21,15 @@ jobs:
           python-version: ${{ inputs.python-version }}
       - name: Install dependencies
         run: |
-          docker context ls
           python -m pip install poetry --upgrade pip
           poetry config virtualenvs.create false
           poetry install
       - name: Install
         run: poetry install --with dev
       - name: Run Lint and Format
-        env:
-          DOCKER_HOST: "npipe:////./pipe/docker_engine"
         run: |
           poetry run ruff check
       - name: Run Pytest
+        env:
+          DOCKER_HOST: "npipe:////./pipe/docker_engine"
         run: poetry run pytest
