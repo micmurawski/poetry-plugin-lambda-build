@@ -6,7 +6,7 @@ on:
         type: string
       runs-on:
         type: string
-        default: "windows-latest"
+        default: "windows-2019"
 
 
 jobs:
