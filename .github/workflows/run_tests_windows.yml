@@ -30,6 +30,7 @@ jobs:
         run: |
           docker context list
           docker run hello-world
+          set DOCKER_HOST="npipe:////./pipe/docker_engine"
           poetry run pytest tests/test_docker.py
       #- name: Run Lint and Format
       #  run: |
