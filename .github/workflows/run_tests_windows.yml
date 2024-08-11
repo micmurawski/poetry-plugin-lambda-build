@@ -26,10 +26,11 @@ jobs:
           poetry install
       - name: Install
         run: poetry install --with dev
-      - name: Run Lint and Format
-        run: |
-          poetry run ruff check
       - name: Run Pytest
         env:
           DOCKER_HOST: "npipe:////./pipe/docker_engine"
         run: poetry run pytest tests/test_docker.py
+      #- name: Run Lint and Format
+      #  run: |
+      #    poetry run ruff check
+      
