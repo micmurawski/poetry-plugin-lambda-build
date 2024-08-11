@@ -30,7 +30,7 @@ jobs:
         run: |
           docker context list
           docker run hello-world
-          dockerd.exe -H npipe:////./pipe/docker_engine -H localhost:2375 --register-service
+          $env:DOCKER_HOST="npipe:////./pipe/docker_engine"
           poetry run pytest tests/test_docker.py
       #- name: Run Lint and Format
       #  run: |
