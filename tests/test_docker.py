@@ -2,8 +2,8 @@ from docker.models.containers import Container
 
 
 def test_docker():
-    #import os
-    #os.environ["DOCKER_HOST"] = "npipe:////./pipe/docker_engine"
+    import os
+    os.environ["DOCKER_HOST"] = "npipe://\\.\pipe\docker_engine"
     from poetry_plugin_lambda_build.docker import get_docker_client
     client = get_docker_client()
     image = "public.ecr.aws/sam/build-python3.12:latest-x86_64"

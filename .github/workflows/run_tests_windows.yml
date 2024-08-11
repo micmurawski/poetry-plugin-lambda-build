@@ -30,10 +30,7 @@ jobs:
         run: |
           docker context list
           docker run hello-world
-          dockerd --unregister-service
-          dockerd -H npipe:// -H 0.0.0.0:2375 --register-service
-          $env:DOCKER_HOST = ":2375"
-          $env:DOCKER_HOST = "127.0.0.1:2375"
+          $ENV:DOCKER_HOST="npipe://\\.\pipe\docker_engine"
           poetry run pytest tests/test_docker.py
       #- name: Run Lint and Format
       #  run: |
