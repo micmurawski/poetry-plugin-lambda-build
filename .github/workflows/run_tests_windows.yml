@@ -27,7 +27,10 @@ jobs:
       - name: Install
         run: poetry install --with dev
       - name: Run Pytest
-        run: poetry run pytest tests/test_docker.py
+        run: |
+        docker context list
+        docker run hello-world
+        poetry run pytest tests/test_docker.py
       #- name: Run Lint and Format
       #  run: |
       #    poetry run ruff check
