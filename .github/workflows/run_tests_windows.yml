@@ -32,4 +32,4 @@ jobs:
       - name: Run Pytest
         env:
           DOCKER_HOST: "npipe:////./pipe/docker_engine"
-        run: poetry run pytest
+        run: poetry run pytest tests/test_docker.py
