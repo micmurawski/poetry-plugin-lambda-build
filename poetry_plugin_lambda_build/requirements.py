@@ -23,13 +23,13 @@ class RequirementsExporter:  # noqa: D101
         self,
         poetry: Poetry,
         io: IO,
-        groups: dict[str, set[str]] = {},  # noqa: B006
+        groups: dict[str, set[str]] | None = None,
         extras: Collection[NormalizedName] = (),
     ) -> None:
         self._poetry = poetry
         self._io = io
-        self._validate_group_options(groups)
-        self._groups = groups
+        self._groups = groups if groups is not None else {}
+        self._validate_group_options()
         self._extras = extras
 
     @property
@@ -41,10 +41,10 @@ class RequirementsExporter:  # noqa: D101
             list(self.activated_groups), only=True
         )
 
-    def _validate_group_options(self, group_options: dict[str, set[str]]) -> None:
+    def _validate_group_options(self) -> None:
         """Raises an error if it detects that a group is not part of pyproject.toml"""  # noqa: D400, D401, D415
         invalid_options = defaultdict(set)
-        for opt, groups in group_options.items():
+        for opt, groups in self._groups.items():
             for group in groups:
                 if not self._poetry.package.has_dependency_group(group):
                     invalid_options[group].add(opt)
