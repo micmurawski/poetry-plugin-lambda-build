@@ -1,5 +1,6 @@
 from __future__ import annotations  # noqa: D100
 
+import shlex
 import urllib.parse
 from collections import defaultdict
 from typing import TYPE_CHECKING, Collection
@@ -192,7 +193,7 @@ class RequirementsExporter:  # noqa: D101
 
         return content
 
-    def export_indexes(self) -> list[str]:  # noqa: D102
+    def export_indexes(self) -> str:  # noqa: D102
         args = []
         has_pypi_repository = any(
             r.name.lower() == "pypi" for r in self._poetry.pool.all_repositories
@@ -210,8 +211,8 @@ class RequirementsExporter:  # noqa: D101
                 not has_pypi_repository
                 and repository is self._poetry.pool.repositories[0]
             ):
-                args += ["--index-url", url]
+                args += [f"--index-url={url}"]
             else:
-                args += ["--extra-index-url", url]
+                args += [f"--extra-index-url={url}"]
 
-        return args
+        return " ".join(shlex.quote(str(arg)) for arg in args)

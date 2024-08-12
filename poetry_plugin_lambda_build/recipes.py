@@ -73,7 +73,7 @@ def get_requirements(cmd: BuildLambdaCommand, parameters: ParametersContainer) -
     ).export()
 
 
-def get_indexes(cmd: BuildLambdaCommand, parameters: ParametersContainer) -> list[str]:  # noqa: D103
+def get_indexes(cmd: BuildLambdaCommand, parameters: ParametersContainer) -> str:  # noqa: D103
     return RequirementsExporter(
         poetry=cmd.poetry, io=cmd.io, groups=parameters.groups
     ).export_indexes()
