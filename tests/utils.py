@@ -35,7 +35,9 @@ def update_pyproject_toml(**kwargs):  # noqa: ANN003, ANN201, D103
             f.write(f'{k} = "{v}" \n')
 
 
-def assert_file_exists_in_dir(dirname: str, base_path: str = None, files: list = None):  # noqa: ANN201, D103, RUF013
+def assert_file_exists_in_dir(  # noqa: D103
+    dirname: str, base_path: str | None = None, files: list | None = None
+) -> None:
     _files = []
     for _base, __, __files in os.walk(dirname):
         _base = remove_prefix(_base, dirname + "/")
@@ -54,7 +56,7 @@ def assert_file_exists_in_dir(dirname: str, base_path: str = None, files: list =
         assert file in _files, f"{file} does not exists in {dirname}"
 
 
-def assert_file_not_exists_in_dir(dirname: str, files: list = None):  # noqa: ANN201, D103, RUF013
+def assert_file_not_exists_in_dir(dirname: str, files: list | None = None):  # noqa: ANN201, D103
     _files = []
     for _base, __, __files in os.walk(dirname):
         _base = remove_prefix(_base, dirname + "/")
@@ -68,7 +70,9 @@ def assert_file_not_exists_in_dir(dirname: str, files: list = None):  # noqa: AN
         assert file not in _files, f"{file} exists in {dirname}"
 
 
-def assert_file_exists_in_zip(filename: str, base_path: str = None, files: list = None):  # noqa: ANN201, D103, RUF013
+def assert_file_exists_in_zip(  # noqa: D103
+    filename: str, base_path: str | None = None, files: list | None = None
+) -> None:
     zip_ = zipfile.ZipFile(filename)
     _list = zip_.namelist()
     if files is None:
@@ -82,7 +86,7 @@ def assert_file_exists_in_zip(filename: str, base_path: str = None, files: list 
         assert file in _list, f"{file} does not exists in zip package"
 
 
-def assert_file_not_exists_in_zip(filename: str, files: list = None):  # noqa: ANN201, D103, RUF013
+def assert_file_not_exists_in_zip(filename: str, files: list | None = None):  # noqa: ANN201, D103
     zip_ = zipfile.ZipFile(filename)
     _list = zip_.namelist()
     if files is None:
