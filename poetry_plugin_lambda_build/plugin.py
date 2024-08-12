@@ -3,6 +3,7 @@ from __future__ import annotations  # noqa: D100
 from typing import TYPE_CHECKING, Any
 
 from cleo.helpers import argument, option
+from cleo.io.inputs.argv_input import ArgvInput
 from poetry.console.commands.env_command import EnvCommand
 from poetry.plugins.application_plugin import ApplicationPlugin
 
@@ -38,7 +39,12 @@ class BuildLambdaCommand(EnvCommand):  # noqa: D101
             for k in plugin_conf:
                 self.container.put(k, plugin_conf[k])
 
-        self.container.parse_tokens(self.io.input._tokens[1:])  # noqa: SLF001
+        input_ = self.io.input
+        if not isinstance(input_, ArgvInput):
+            msg = f"Unexpected input: {input_!r}"
+            raise TypeError(msg)
+
+        self.container.parse_tokens(input_._tokens[1:])  # noqa: SLF001
 
         return self.container
 
