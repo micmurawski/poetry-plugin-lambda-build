@@ -114,9 +114,10 @@ class RequirementsExporter:  # noqa: D101
 
     def export(  # noqa: C901, D102
         self,
-        with_extras: bool = False,  # noqa: FBT001, FBT002
-        allow_editable: bool = True,  # noqa: FBT001, FBT002
-        with_hashes: bool = False,  # noqa: FBT001, FBT002
+        *,
+        with_extras: bool = False,
+        allow_editable: bool = True,
+        with_hashes: bool = False,
     ) -> str:
         indexes = set()
         content = ""

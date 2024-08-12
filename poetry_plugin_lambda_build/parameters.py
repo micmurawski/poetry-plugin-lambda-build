@@ -171,7 +171,7 @@ class ParametersContainer(dict):  # noqa: D101
     def is_in_args(self, key: str) -> bool:  # noqa: D102
         return key in self.ARGS
 
-    def check_key(self, key: Any, raise_error: bool = False) -> bool:  # noqa: ANN401, FBT001, FBT002, D102
+    def check_key(self, key: Any, *, raise_error: bool = False) -> bool:  # noqa: ANN401, D102
         is_in = self.is_in_args(key) or self.is_in_opts(key)
         if (not is_in) and raise_error:
             raise PoetryConsoleError(  # noqa: TRY003
