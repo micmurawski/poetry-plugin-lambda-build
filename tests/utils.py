@@ -13,7 +13,7 @@ if TYPE_CHECKING:
 
 
 def run_python_cmd(  # noqa: D103
-    *cmd: list[str],
+    *cmd: str,
     logger: Logger | None = None,
     stdout: int = subprocess.PIPE,
     stderr: int = subprocess.PIPE,
@@ -69,8 +69,8 @@ def assert_file_not_exists_in_dir(dirname: str, files: list = None):  # noqa: AN
 
 
 def assert_file_exists_in_zip(filename: str, base_path: str = None, files: list = None):  # noqa: ANN201, D103, RUF013
-    zip = zipfile.ZipFile(filename)  # noqa: A001
-    _list = zip.namelist()
+    zip_ = zipfile.ZipFile(filename)
+    _list = zip_.namelist()
     if files is None:
         files = []
     if base_path:
@@ -83,8 +83,8 @@ def assert_file_exists_in_zip(filename: str, base_path: str = None, files: list 
 
 
 def assert_file_not_exists_in_zip(filename: str, files: list = None):  # noqa: ANN201, D103, RUF013
-    zip = zipfile.ZipFile(filename)  # noqa: A001
-    _list = zip.namelist()
+    zip_ = zipfile.ZipFile(filename)
+    _list = zip_.namelist()
     if files is None:
         files = []
     for file in files:

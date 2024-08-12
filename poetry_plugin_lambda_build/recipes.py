@@ -133,8 +133,8 @@ def verify_checksum(param):  # noqa: ANN001, ANN201, D103
                 return None
 
             retval = fun(self, *args, **kwargs)
-            with TemporaryDirectory() as dir:  # noqa: A001
-                checksum_file_path = os.path.join(dir, "checksum")  # noqa: PTH118
+            with TemporaryDirectory() as temp_dir:
+                checksum_file_path = os.path.join(temp_dir, "checksum")  # noqa: PTH118
                 with open(checksum_file_path, "w") as file:  # noqa: PTH123
                     file.write(curr_checksum)
 
@@ -223,17 +223,17 @@ class Builder:  # noqa: D101
                 src=f"{container.id}:{CONTAINER_CACHE_DIR}/.", dst=layer_output_dir
             )
 
-    def _create_target(self, dir: str, target: str, exclude: None | list = None):  # noqa: ANN202, A002
+    def _create_target(self, dest_dir: str, target: str, exclude: None | list = None):  # noqa: ANN202
         if target.endswith(".zip"):
             create_zip_package(
-                dir=dir,
+                dest_dir=dest_dir,
                 output=target,
                 exclude=exclude,
                 **self.parameters.get_section("zip"),
             )
         else:
             shutil.copytree(
-                dir,
+                dest_dir,
                 target,
                 dirs_exist_ok=True,
                 ignore=shutil.ignore_patterns(*exclude) if exclude else None,
@@ -283,7 +283,7 @@ class Builder:  # noqa: D101
             self.cmd.info(f"Building {target}...")
             os.makedirs(os.path.dirname(target), exist_ok=True)  # noqa: PTH103, PTH120
             self._create_target(
-                dir=remove_suffix(layer_output_dir, install_dir),
+                dest_dir=remove_suffix(layer_output_dir, install_dir),
                 target=target,
                 exclude=[requirements_path],
             )
@@ -340,7 +340,7 @@ class Builder:  # noqa: D101
             self.cmd.info(f"Building target: {target}")
             os.makedirs(os.path.dirname(target), exist_ok=True)  # noqa: PTH103, PTH120
             self._create_target(
-                dir=remove_suffix(package_dir, install_dir),
+                dest_dir=remove_suffix(package_dir, install_dir),
                 target=target,
             )
             self.cmd.info(f"Target successfully built: {target}...")
@@ -400,7 +400,7 @@ class Builder:  # noqa: D101
 
             os.makedirs(os.path.dirname(target), exist_ok=True)  # noqa: PTH103, PTH120
             self._create_target(
-                dir=remove_suffix(package_dir, install_dir), target=target
+                dest_dir=remove_suffix(package_dir, install_dir), target=target
             )
             self.cmd.info(f"target successfully built: {target}...")
 
