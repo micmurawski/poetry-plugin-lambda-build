@@ -73,7 +73,8 @@ class RequirementsExporter:  # noqa: D101
             if not group.is_optional()
         }
 
-    def _split_dependency_pkg(self, dependency_package, with_extras):  # noqa: ANN001, ANN202
+    @staticmethod
+    def _split_dependency_pkg(dependency_package, with_extras):  # noqa: ANN001, ANN205
         pkg = dependency_package.clone()
 
         if not with_extras:
@@ -92,8 +93,8 @@ class RequirementsExporter:  # noqa: D101
                 return False
         return True
 
-    def _determine_requirement_line(  # noqa: ANN202
-        self,
+    @staticmethod
+    def _determine_requirement_line(  # noqa: ANN205
         is_direct_remote_reference,  # noqa: ANN001
         is_direct_local_reference,  # noqa: ANN001
         requirement,  # noqa: ANN001
