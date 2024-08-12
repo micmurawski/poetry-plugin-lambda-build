@@ -66,22 +66,22 @@ def run_cmd(  # noqa: D103
     stderr: int = subprocess.PIPE,
     **kwargs,  # noqa: ANN003
 ) -> int:
-    process = subprocess.Popen(cmd, stdout=stdout, stderr=stderr, **kwargs)  # noqa: S603
+    process = subprocess.Popen(cmd, stdout=stdout, stderr=stderr, text=True, **kwargs)  # noqa: S603
     if logger:
         while process.poll() is None:
-            logger.info(process.stdout.readline().decode())
+            logger.info(process.stdout.readline())
     else:
         while process.poll() is None:
-            sys.stdout.write(process.stdout.readline().decode())
+            sys.stdout.write(process.stdout.readline())
     _, error = process.communicate()
 
     if process.returncode != 0:
         if logger:
-            logger.error(error.decode())
+            logger.error(error)
         else:
-            sys.stderr.write(error.decode())
+            sys.stderr.write(error)
         raise RuntimeError(
-            error.decode(),
+            error,
             process.returncode,
         )
     return process.returncode
