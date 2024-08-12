@@ -1,4 +1,4 @@
-from __future__ import annotations
+from __future__ import annotations  # noqa: D100
 
 import shlex
 from typing import Any
@@ -8,7 +8,7 @@ from poetry.console.exceptions import PoetryConsoleError
 from poetry_plugin_lambda_build.utils import remove_prefix
 
 
-def comma_separated_collection(x: str) -> list[str]:
+def comma_separated_collection(x: str) -> list[str]:  # noqa: D103
     return x.split(",")
 
 
@@ -22,7 +22,7 @@ ARGS = {
         str,
     ),
     "docker-environment": (
-        "Environment variables to set inside the container (comma separated string) ex. VAR_1=VALUE_1,VAR_2=VALUE_2",
+        "Environment variables to set inside the container (comma separated string) ex. VAR_1=VALUE_1,VAR_2=VALUE_2",  # noqa: E501
         True,
         False,
         None,
@@ -44,14 +44,14 @@ ARGS = {
     ),
     "docker-network-mode": ("Network-mode", True, False, None, str),
     "docker-platform": (
-        "Platform in the format os[/arch[/variant]]. Only used if the method needs to pull the requested image.",
+        "Platform in the format os[/arch[/variant]]. Only used if the method needs to pull the requested image.",  # noqa: E501
         True,
         False,
         None,
         str,
     ),
     "package-artifact-path": (
-        "Output package path (default: package.zip). Set the '.zip' extension to wrap the artifact into a zip package otherwise, output will be created in the directory.",
+        "Output package path (default: package.zip). Set the '.zip' extension to wrap the artifact into a zip package otherwise, output will be created in the directory.",  # noqa: E501
         True,
         False,
         "package.zip",
@@ -65,7 +65,7 @@ ARGS = {
         str,
     ),
     "function-artifact-path": (
-        "Output function package path. Set the '.zip' extension to wrap the artifact into a zip package otherwise, output will be created in the directory.",
+        "Output function package path. Set the '.zip' extension to wrap the artifact into a zip package otherwise, output will be created in the directory.",  # noqa: E501
         True,
         False,
         None,
@@ -79,7 +79,7 @@ ARGS = {
         str,
     ),
     "layer-artifact-path": (
-        "Output layer package path. Set the '.zip' extension to wrap the artifact into a zip package otherwise, output will be created in the directory.",
+        "Output layer package path. Set the '.zip' extension to wrap the artifact into a zip package otherwise, output will be created in the directory.",  # noqa: E501
         True,
         False,
         None,
@@ -125,7 +125,7 @@ ARGS = {
         int,
     ),
     "zip-compression": (
-        "ZIP_STORED (no compression), ZIP_DEFLATED (requires zlib), ZIP_BZIP2 (requires bz2) or ZIP_LZMA (requires lzma)",
+        "ZIP_STORED (no compression), ZIP_DEFLATED (requires zlib), ZIP_BZIP2 (requires bz2) or ZIP_LZMA (requires lzma)",  # noqa: E501
         True,
         False,
         "ZIP_STORED",
@@ -147,11 +147,11 @@ OPTS = {
 }
 
 
-class ParametersContainer(dict):
+class ParametersContainer(dict):  # noqa: D101
     ARGS = ARGS
     OPTS = OPTS
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, **kwargs):  # noqa: ANN002, ANN003, ANN204, D107
         super().__init__(*args, **kwargs)
         for k, v in self.ARGS.items():
             self[k] = v[-2]
@@ -159,31 +159,31 @@ class ParametersContainer(dict):
         for k, v in self.OPTS.items():
             self[k] = v[-2]
 
-    def put(self, key: Any, value: Any) -> None:
+    def put(self, key: Any, value: Any) -> None:  # noqa: ANN401, D102
         if value is not None:
             self.check_key(key, raise_error=True)
             _parser = (self.ARGS.get(key) or self.OPTS[key])[-1]
             self[key] = _parser(value)
 
-    def is_in_opts(self, key: str) -> bool:
+    def is_in_opts(self, key: str) -> bool:  # noqa: D102
         return key in self.OPTS
 
-    def is_in_args(self, key: str) -> bool:
+    def is_in_args(self, key: str) -> bool:  # noqa: D102
         return key in self.ARGS
 
-    def check_key(self, key: Any, raise_error: bool = False) -> bool:
+    def check_key(self, key: Any, raise_error: bool = False) -> bool:  # noqa: ANN401, FBT001, FBT002, D102
         is_in = self.is_in_args(key) or self.is_in_opts(key)
         if (not is_in) and raise_error:
-            raise PoetryConsoleError(
-                f"<error>Error: Bad input parameter: {key} run poetry build-lambda --help for more info</error>"
+            raise PoetryConsoleError(  # noqa: TRY003
+                f"<error>Error: Bad input parameter: {key} run poetry build-lambda --help for more info</error>"  # noqa: EM102, E501
             )
         return is_in
 
-    def __getitem__(self, key: Any) -> Any:
+    def __getitem__(self, key: Any) -> Any:  # noqa: ANN401, D105
         self.check_key(key)
         return super().__getitem__(key)
 
-    def get_section(self, section: str) -> dict:
+    def get_section(self, section: str) -> dict:  # noqa: D102
         return {
             remove_prefix(k, section + "-").replace("-", "_"): self[k]
             for k in self
@@ -191,11 +191,11 @@ class ParametersContainer(dict):
         }
 
     @property
-    def groups(self) -> dict:
+    def groups(self) -> dict:  # noqa: D102
         _keys = {"with", "without", "only"}
         return {k: set(self[k]) if self[k] else set() for k in _keys}
 
-    def _iter_tokens(self, tokens):
+    def _iter_tokens(self, tokens):  # noqa: ANN001, ANN202
         i = 0
         while i < len(tokens):
             token = tokens[i].strip()
@@ -215,6 +215,6 @@ class ParametersContainer(dict):
                 i += 1
             i += 1
 
-    def parse_tokens(self, tokens: list[str]):
+    def parse_tokens(self, tokens: list[str]):  # noqa: ANN201, D102
         for k, v in self._iter_tokens(tokens):
             self.put(k, v)

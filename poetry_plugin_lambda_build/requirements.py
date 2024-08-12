@@ -1,26 +1,26 @@
-from __future__ import annotations
+from __future__ import annotations  # noqa: D100
 
 import urllib.parse
 from collections import defaultdict
 from typing import Collection
 
-from cleo.io.io import IO
-from packaging.utils import NormalizedName
+from cleo.io.io import IO  # noqa: TCH002
+from packaging.utils import NormalizedName  # noqa: TCH002
 from poetry.console.exceptions import GroupNotFound
-from poetry.core.packages.project_package import ProjectPackage
-from poetry.poetry import Poetry
+from poetry.core.packages.project_package import ProjectPackage  # noqa: TCH002
+from poetry.poetry import Poetry  # noqa: TCH002
 from poetry.repositories.http_repository import HTTPRepository
 from poetry_plugin_export.walker import get_project_dependency_packages
 
 
-class RequirementsExporter:
+class RequirementsExporter:  # noqa: D101
     ALLOWED_HASH_ALGORITHMS = ("sha256", "sha384", "sha512")
 
-    def __init__(
+    def __init__(  # noqa: D107
         self,
         poetry: Poetry,
         io: IO,
-        groups: dict[str, set[str]] = {},
+        groups: dict[str, set[str]] = {},  # noqa: B006
         extras: Collection[NormalizedName] = (),
     ) -> None:
         self._poetry = poetry
@@ -30,18 +30,16 @@ class RequirementsExporter:
         self._extras = extras
 
     @property
-    def name(self):
+    def name(self):  # noqa: ANN201, D102
         return self.project_with_activated_groups_only().name
 
-    def project_with_activated_groups_only(self) -> ProjectPackage:
+    def project_with_activated_groups_only(self) -> ProjectPackage:  # noqa: D102
         return self._poetry.package.with_dependency_groups(
             list(self.activated_groups), only=True
         )
 
     def _validate_group_options(self, group_options: dict[str, set[str]]) -> None:
-        """
-        Raises an error if it detects that a group is not part of pyproject.toml
-        """
+        """Raises an error if it detects that a group is not part of pyproject.toml"""  # noqa: D400, D401, D415
         invalid_options = defaultdict(set)
         for opt, groups in group_options.items():
             for group in groups:
@@ -55,24 +53,24 @@ class RequirementsExporter:
                     for opt in sorted(invalid_options[group])
                 )
                 message_parts.append(f"{group} (via {opts})")
-            raise GroupNotFound(f"Group(s) not found: {', '.join(message_parts)}")
+            raise GroupNotFound(f"Group(s) not found: {', '.join(message_parts)}")  # noqa: EM102, TRY003
 
     @property
-    def activated_groups(self) -> set[str]:
+    def activated_groups(self) -> set[str]:  # noqa: D102
         return self._groups["only"] or self.non_optional_groups.union(
             self._groups["with"]
         ).difference(self._groups["without"])
 
     @property
-    def non_optional_groups(self) -> set[str]:
-        # TODO: this should move into poetry-core
+    def non_optional_groups(self) -> set[str]:  # noqa: D102
+        # TODO: this should move into poetry-core  # noqa: FIX002, TD002, TD003
         return {
             group.name
-            for group in self._poetry.package._dependency_groups.values()
+            for group in self._poetry.package._dependency_groups.values()  # noqa: SLF001
             if not group.is_optional()
         }
 
-    def _split_dependency_pkg(self, dependency_package, with_extras):
+    def _split_dependency_pkg(self, dependency_package, with_extras):  # noqa: ANN001, ANN202
         pkg = dependency_package.clone()
 
         if not with_extras:
@@ -80,8 +78,8 @@ class RequirementsExporter:
 
         return pkg.dependency, pkg.package
 
-    def _handle_develop_mode(self, package, allow_editable):
-        if package.develop:
+    def _handle_develop_mode(self, package, allow_editable):  # noqa: ANN001, ANN202
+        if package.develop:  # noqa: SIM102
             if not allow_editable:
                 self._io.write_error_line(
                     f"<warning>Warning: {package.pretty_name} is locked in develop"
@@ -91,30 +89,30 @@ class RequirementsExporter:
                 return False
         return True
 
-    def _determine_requirement_line(
+    def _determine_requirement_line(  # noqa: ANN202
         self,
-        is_direct_remote_reference,
-        is_direct_local_reference,
-        requirement,
-        package,
-        dependency,
+        is_direct_remote_reference,  # noqa: ANN001
+        is_direct_local_reference,  # noqa: ANN001
+        requirement,  # noqa: ANN001
+        package,  # noqa: ANN001
+        dependency,  # noqa: ANN001
     ):
         from poetry.core.packages.utils.utils import path_to_url
 
         if is_direct_remote_reference:
             return requirement
-        elif is_direct_local_reference:
-            assert dependency.source_url is not None
+        elif is_direct_local_reference:  # noqa: RET505
+            assert dependency.source_url is not None  # noqa: S101
             dependency_uri = path_to_url(dependency.source_url)
             return f"{package.complete_name} @ {dependency_uri}"
         else:
             return f"{package.complete_name}=={package.version}"
 
-    def export(
+    def export(  # noqa: C901, D102
         self,
-        with_extras: bool = False,
-        allow_editable: bool = True,
-        with_hashes: bool = False,
+        with_extras: bool = False,  # noqa: FBT001, FBT002
+        allow_editable: bool = True,  # noqa: FBT001, FBT002
+        with_hashes: bool = False,  # noqa: FBT001, FBT002
     ) -> str:
         indexes = set()
         content = ""
@@ -192,7 +190,7 @@ class RequirementsExporter:
 
         return content
 
-    def export_indexes(self) -> list[str]:
+    def export_indexes(self) -> list[str]:  # noqa: D102
         args = []
         has_pypi_repository = any(
             r.name.lower() == "pypi" for r in self._poetry.pool.all_repositories

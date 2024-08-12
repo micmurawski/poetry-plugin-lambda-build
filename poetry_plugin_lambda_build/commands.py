@@ -1,4 +1,4 @@
-import shlex
+import shlex  # noqa: D100
 
 from poetry_plugin_lambda_build.utils import join_cmds
 

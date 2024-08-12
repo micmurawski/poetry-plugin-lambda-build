@@ -1,4 +1,4 @@
-from __future__ import annotations
+from __future__ import annotations  # noqa: D100
 
 import hashlib
 import os
@@ -7,13 +7,13 @@ import sys
 from contextlib import contextmanager
 from fnmatch import fnmatch
 from functools import reduce
-from logging import Logger
+from logging import Logger  # noqa: TCH003
 from operator import or_
-from pathlib import Path
+from pathlib import Path  # noqa: TCH003
 from typing import Generator
 
 
-def join_cmds(*cmds: list[list[str]], joiner: str = "&&") -> list[str]:
+def join_cmds(*cmds: list[list[str]], joiner: str = "&&") -> list[str]:  # noqa: D103
     _cmds = list(filter(lambda x: x, cmds))
     result = []
     for i, cmd in enumerate(_cmds):
@@ -23,7 +23,7 @@ def join_cmds(*cmds: list[list[str]], joiner: str = "&&") -> list[str]:
     return result
 
 
-def cmd_split(cmd: list[str], separator="&&") -> Generator[None, None, list[str]]:
+def cmd_split(cmd: list[str], separator="&&") -> Generator[None, None, list[str]]:  # noqa: ANN001, D103
     result = []
     for c in cmd:
         if c == separator:
@@ -35,8 +35,8 @@ def cmd_split(cmd: list[str], separator="&&") -> Generator[None, None, list[str]
 
 
 @contextmanager
-def cd(path):
-    old_path = os.getcwd()
+def cd(path):  # noqa: ANN001, ANN201, D103
+    old_path = os.getcwd()  # noqa: PTH109
     os.chdir(path)
     try:
         yield
@@ -44,26 +44,26 @@ def cd(path):
         os.chdir(old_path)
 
 
-def remove_prefix(text: str, prefix: str) -> str:
+def remove_prefix(text: str, prefix: str) -> str:  # noqa: D103
     return text[len(prefix) :] if text.startswith(prefix) and prefix else text
 
 
-def remove_suffix(text: str, suffix: str) -> str:
+def remove_suffix(text: str, suffix: str) -> str:  # noqa: D103
     return text[: -len(suffix)] if text.endswith(suffix) and suffix else text
 
 
-def mask_string(s: str) -> str:
+def mask_string(s: str) -> str:  # noqa: D103
     return f'{s[:14]}{"*" * len(s)}'
 
 
-def run_cmd(
+def run_cmd(  # noqa: D103
     *cmd: list[str],
     logger: Logger | None = None,
     stdout: int = subprocess.PIPE,
     stderr: int = subprocess.PIPE,
-    **kwargs,
+    **kwargs,  # noqa: ANN003
 ) -> int:
-    process = subprocess.Popen(cmd, stdout=stdout, stderr=stderr, **kwargs)
+    process = subprocess.Popen(cmd, stdout=stdout, stderr=stderr, **kwargs)  # noqa: S603
     if logger:
         while process.poll() is None:
             logger.info(process.stdout.readline().decode())
@@ -84,32 +84,34 @@ def run_cmd(
     return process.returncode
 
 
-def run_cmds(
+def run_cmds(  # noqa: D103
     cmds: list[str],
     print_safe_cmds: list[str],
     logger: Logger,
     stdout: int = subprocess.PIPE,
     stderr: int = subprocess.PIPE,
-    **kwargs,
+    **kwargs,  # noqa: ANN003
 ) -> int:
     for cmd, print_safe_cmd in zip(cmd_split(cmds), cmd_split(print_safe_cmds)):
-        logger.debug(f"Executing: {' '.join(print_safe_cmd)}")
+        logger.debug(f"Executing: {' '.join(print_safe_cmd)}")  # noqa: G004
         run_cmd(*cmd, logger=logger, stdout=stdout, stderr=stderr, **kwargs)
 
 
-def format_cmd(cmd: list[str], **kwargs) -> list[str]:
-    """
-    Formats a command by joining its elements into a single string,
+def format_cmd(cmd: list[str], **kwargs) -> list[str]:  # noqa: ANN003
+    """Formats a command by joining its elements into a single string,
     replacing placeholders with provided keyword arguments, and then
     splitting the string back into a list of arguments.
 
     Args:
+    ----
         cmd (list[str]): The command to format.
         **kwargs: Keyword arguments to replace placeholders in the command.
 
     Returns:
+    -------
         list[str]: The formatted command as a list of arguments.
-    """
+
+    """  # noqa: D205, D401
     split_marker = "----"
     return (
         split_marker.join(cmd)
@@ -123,19 +125,21 @@ def format_cmd(cmd: list[str], **kwargs) -> list[str]:
     )
 
 
-def compute_checksum(path: str | Path, exclude: None | list[str | Path] = None) -> str:
-    m = hashlib.md5()
+def compute_checksum(path: str | Path, exclude: None | list[str | Path] = None) -> str:  # noqa: D103
+    m = hashlib.md5()  # noqa: S324
 
     if exclude is None:
         exclude = []
-    if os.path.isdir(path):
+    if os.path.isdir(path):  # noqa: PTH112
         for root, _, files in os.walk(path):
             for file_read in files:
-                full_path = os.path.join(root, file_read)
+                full_path = os.path.join(root, file_read)  # noqa: PTH118
                 if not reduce(
-                    or_, [fnmatch(full_path, pattern) for pattern in exclude], False
+                    or_,
+                    [fnmatch(full_path, pattern) for pattern in exclude],
+                    False,  # noqa: FBT003
                 ):
-                    m.update(str(os.stat(full_path)).encode())
+                    m.update(str(os.stat(full_path)).encode())  # noqa: PTH116
     else:
-        m.update(str(os.stat(path)).encode())
+        m.update(str(os.stat(path)).encode())  # noqa: PTH116
     return m.hexdigest()

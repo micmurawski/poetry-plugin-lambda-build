@@ -1,8 +1,8 @@
-from __future__ import annotations
+from __future__ import annotations  # noqa: D100
 
 from typing import Any
 
-from cleo.application import Application
+from cleo.application import Application  # noqa: TCH002
 from cleo.helpers import argument, option
 from poetry.console.commands.env_command import EnvCommand
 from poetry.plugins.application_plugin import ApplicationPlugin
@@ -11,15 +11,15 @@ from poetry_plugin_lambda_build.parameters import ParametersContainer
 from poetry_plugin_lambda_build.recipes import Builder
 
 
-class BuildLambdaCommand(EnvCommand):
+class BuildLambdaCommand(EnvCommand):  # noqa: D101
     name = "build-lambda"
     description = "Execute to build lambda artifacts"
 
-    arguments = [
+    arguments = [  # noqa: RUF012
         argument(name, *params[:-1])
         for name, params in ParametersContainer.ARGS.items()
     ]
-    options = [
+    options = [  # noqa: RUF012
         option(k, None, *params[:-1]) for k, params in ParametersContainer.OPTS.items()
     ]
 
@@ -36,32 +36,32 @@ class BuildLambdaCommand(EnvCommand):
             for k in plugin_conf:
                 self.container.put(k, plugin_conf[k])
 
-        self.container.parse_tokens(self.io.input._tokens[1:])
+        self.container.parse_tokens(self.io.input._tokens[1:])  # noqa: SLF001
 
         return self.container
 
-    def handle(self) -> Any:
+    def handle(self) -> Any:  # noqa: ANN401, D102
         parameters: ParametersContainer = self._get_parameters()
         Builder(self, parameters).build()
         self.line("\n✨ Done!")
 
-    def info(self, txt: str):
+    def info(self, txt: str):  # noqa: ANN201, D102
         return self.line(txt, style="info")
 
-    def debug(self, txt: str):
+    def debug(self, txt: str):  # noqa: ANN201, D102
         return self.line(txt, style="debug")
 
-    def error(self, txt: str):
+    def error(self, txt: str):  # noqa: ANN201, D102
         return self.line(txt, style="error")
 
-    def warning(self, txt: str):
+    def warning(self, txt: str):  # noqa: ANN201, D102
         return self.line(txt, style="warning")
 
 
-def factory() -> BuildLambdaCommand:
+def factory() -> BuildLambdaCommand:  # noqa: D103
     return BuildLambdaCommand()
 
 
-class LambdaPlugin(ApplicationPlugin):
-    def activate(self, application: Application, *args: Any, **kwargs: Any) -> None:
+class LambdaPlugin(ApplicationPlugin):  # noqa: D101
+    def activate(self, application: Application, *args: Any, **kwargs: Any) -> None:  # noqa: ANN401, ARG002, D102
         application.command_loader.register_factory("build-lambda", factory)

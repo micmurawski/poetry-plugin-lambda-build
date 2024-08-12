@@ -1,9 +1,9 @@
-from __future__ import annotations
+from __future__ import annotations  # noqa: D100
 
 import os
 import platform
 import sys
-from pathlib import Path
+from pathlib import Path  # noqa: TCH003
 
 import pytest
 
@@ -19,11 +19,10 @@ from tests.utils import (
 
 
 @pytest.fixture(scope="session", autouse=True)
-def env_vars():
+def env_vars():  # noqa: ANN201, PT004, D103
     if platform.system() == "Darwin":
         user = os.environ["USER"]
         os.environ["DOCKER_HOST"] = f"unix:///Users/{user}/.docker/run/docker.sock"
-    yield
 
 
 PYTHON_VER = f"{sys.version_info[0]}.{sys.version_info[1]}"
@@ -183,18 +182,18 @@ DIR_BUILDS_PARAMS = {
 
 
 @pytest.mark.parametrize(
-    "config,args,assert_files",
+    "config,args,assert_files",  # noqa: PT006
     list(ZIP_BUILDS_PARAMS.values()),
     ids=list(ZIP_BUILDS_PARAMS.keys()),
 )
-def test_zip_builds(config: dict, args: dict, assert_files: list, tmp_path: Path):
+def test_zip_builds(config: dict, args: dict, assert_files: list, tmp_path: Path):  # noqa: ANN201, D103
     with cd(tmp_path):
         handler_file = "test_project/handler.py"
         assert run_poetry_cmd("new", "test-project") == 0
         with cd(tmp_path / "test-project"):
             assert run_poetry_cmd("add", "requests") == 0
             assert run_poetry_cmd("add", "pytest", "--group=test") == 0
-            open(handler_file, "w").close()
+            open(handler_file, "w").close()  # noqa: PTH123
 
             if PYTHON_VER == "3.8":
                 config["pre-install-script"] = (
@@ -210,18 +209,18 @@ def test_zip_builds(config: dict, args: dict, assert_files: list, tmp_path: Path
 
 
 @pytest.mark.parametrize(
-    "config,args,assert_files",
+    "config,args,assert_files",  # noqa: PT006
     list(DIR_BUILDS_PARAMS.values()),
     ids=list(DIR_BUILDS_PARAMS.keys()),
 )
-def test_dir_builds(config: dict, args: dict, assert_files: list, tmp_path: Path):
+def test_dir_builds(config: dict, args: dict, assert_files: list, tmp_path: Path):  # noqa: ANN201, D103
     with cd(tmp_path):
         handler_file = "test_project/handler.py"
         assert run_poetry_cmd("new", "test-project") == 0
         with cd(tmp_path / "test-project"):
             assert run_poetry_cmd("add", "requests") == 0
             assert run_poetry_cmd("add", "pytest", "--group=test") == 0
-            open(handler_file, "w").close()
+            open(handler_file, "w").close()  # noqa: PTH123
 
             if PYTHON_VER == "3.8":
                 config["pre-install-script"] = (
