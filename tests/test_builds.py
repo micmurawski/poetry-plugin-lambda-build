@@ -21,8 +21,8 @@ if TYPE_CHECKING:
     from pathlib import Path
 
 
-@pytest.fixture(scope="session", autouse=True)
-def env_vars():  # noqa: ANN201, PT004, D103
+@pytest.fixture(name="env_vars", scope="session", autouse=True)
+def _env_vars():  # noqa: ANN202
     if platform.system() == "Darwin":
         user = os.environ["USER"]
         os.environ["DOCKER_HOST"] = f"unix:///Users/{user}/.docker/run/docker.sock"
