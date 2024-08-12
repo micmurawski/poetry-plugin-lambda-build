@@ -4,12 +4,14 @@ import os
 import tarfile
 from contextlib import contextmanager
 from tempfile import TemporaryDirectory
-from typing import Generator
+from typing import TYPE_CHECKING, Generator
 
 import docker
-from docker.models.containers import Container  # noqa: TCH002
 
 from poetry_plugin_lambda_build.utils import cd, cmd_split
+
+if TYPE_CHECKING:
+    from docker.models.containers import Container
 
 
 def _parse_str_to_list(value: str) -> list[str]:

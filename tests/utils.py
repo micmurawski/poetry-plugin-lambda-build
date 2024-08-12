@@ -4,9 +4,12 @@ import os
 import subprocess
 import sys
 import zipfile
-from logging import Logger  # noqa: TCH003
+from typing import TYPE_CHECKING
 
 from poetry_plugin_lambda_build.utils import remove_prefix, run_cmd
+
+if TYPE_CHECKING:
+    from logging import Logger
 
 
 def run_python_cmd(  # noqa: D103

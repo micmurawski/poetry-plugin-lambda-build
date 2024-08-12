@@ -2,15 +2,17 @@ from __future__ import annotations  # noqa: D100
 
 import urllib.parse
 from collections import defaultdict
-from typing import Collection
+from typing import TYPE_CHECKING, Collection
 
-from cleo.io.io import IO  # noqa: TCH002
-from packaging.utils import NormalizedName  # noqa: TCH002
 from poetry.console.exceptions import GroupNotFound
-from poetry.core.packages.project_package import ProjectPackage  # noqa: TCH002
-from poetry.poetry import Poetry  # noqa: TCH002
 from poetry.repositories.http_repository import HTTPRepository
 from poetry_plugin_export.walker import get_project_dependency_packages
+
+if TYPE_CHECKING:
+    from cleo.io.io import IO
+    from packaging.utils import NormalizedName
+    from poetry.core.packages.project_package import ProjectPackage
+    from poetry.poetry import Poetry
 
 
 class RequirementsExporter:  # noqa: D101

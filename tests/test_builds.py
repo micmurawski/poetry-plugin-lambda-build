@@ -3,7 +3,7 @@ from __future__ import annotations  # noqa: D100
 import os
 import platform
 import sys
-from pathlib import Path  # noqa: TCH003
+from typing import TYPE_CHECKING
 
 import pytest
 
@@ -16,6 +16,9 @@ from tests.utils import (
     run_poetry_cmd,
     update_pyproject_toml,
 )
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 
 @pytest.fixture(scope="session", autouse=True)

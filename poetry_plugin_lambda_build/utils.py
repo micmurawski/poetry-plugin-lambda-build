@@ -7,10 +7,12 @@ import sys
 from contextlib import contextmanager
 from fnmatch import fnmatch
 from functools import reduce
-from logging import Logger  # noqa: TCH003
 from operator import or_
-from pathlib import Path  # noqa: TCH003
-from typing import Generator
+from typing import TYPE_CHECKING, Generator
+
+if TYPE_CHECKING:
+    from logging import Logger
+    from pathlib import Path
 
 
 def join_cmds(*cmds: list[list[str]], joiner: str = "&&") -> list[str]:  # noqa: D103

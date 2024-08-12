@@ -6,8 +6,7 @@ import shutil
 import zipfile
 from functools import wraps
 from tempfile import TemporaryDirectory
-
-from poetry.console.commands.command import Command  # noqa: TCH002
+from typing import TYPE_CHECKING
 
 from poetry_plugin_lambda_build.commands import (
     INSTALL_CMD_TMPL,
@@ -23,7 +22,6 @@ from poetry_plugin_lambda_build.docker import (
     exec_run_container,
     run_container,
 )
-from poetry_plugin_lambda_build.parameters import ParametersContainer  # noqa: TCH001
 from poetry_plugin_lambda_build.requirements import RequirementsExporter
 from poetry_plugin_lambda_build.utils import (
     compute_checksum,
@@ -34,6 +32,11 @@ from poetry_plugin_lambda_build.utils import (
     run_cmds,
 )
 from poetry_plugin_lambda_build.zip import create_zip_package
+
+if TYPE_CHECKING:
+    from poetry.console.commands.command import Command
+
+    from poetry_plugin_lambda_build.parameters import ParametersContainer
 
 CONTAINER_CACHE_DIR = "/opt/lambda/cache"
 CURRENT_WORK_DIR = os.getcwd()  # noqa: PTH109

@@ -1,14 +1,16 @@
 from __future__ import annotations  # noqa: D100
 
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
-from cleo.application import Application  # noqa: TCH002
 from cleo.helpers import argument, option
 from poetry.console.commands.env_command import EnvCommand
 from poetry.plugins.application_plugin import ApplicationPlugin
 
 from poetry_plugin_lambda_build.parameters import ParametersContainer
 from poetry_plugin_lambda_build.recipes import Builder
+
+if TYPE_CHECKING:
+    from cleo.application import Application
 
 
 class BuildLambdaCommand(EnvCommand):  # noqa: D101
