@@ -22,8 +22,9 @@ def create_zip_package(dest_dir, output, exclude=None, **kwargs):  # noqa: ANN00
         exclude = ["*.pyc", "*__pycache__/*"]
 
     with ZipFile(output, "w", **kwargs) as zip_file:
-        for i in os.walk(dest_dir):
-            base_path, _, files = i
+        base_path: str
+        files: list[str]
+        for base_path, _, files in os.walk(dest_dir):
             for file in files:
                 file_path = os.path.join(base_path, file)  # noqa: PTH118
 
