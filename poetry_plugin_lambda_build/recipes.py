@@ -5,6 +5,7 @@ import os
 import shutil
 import zipfile
 from functools import wraps
+from pathlib import Path
 from tempfile import TemporaryDirectory
 from typing import TYPE_CHECKING
 
@@ -97,9 +98,7 @@ def verify_checksum(param):  # noqa: ANN001, ANN201, D103
                         os.path.join(install_dir, "checksum")  # noqa: PTH118
                     ).decode()
                 else:
-                    prev_checksum = open(  # noqa: SIM115, PTH123
-                        os.path.join(target, install_dir, "checksum")  # noqa: PTH118
-                    ).read()
+                    prev_checksum = Path(target, install_dir, "checksum").read_text()
             except (FileNotFoundError, KeyError):
                 prev_checksum = None
 

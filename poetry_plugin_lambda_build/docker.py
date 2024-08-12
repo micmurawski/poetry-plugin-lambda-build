@@ -3,6 +3,7 @@ from __future__ import annotations  # noqa: D100
 import os
 import tarfile
 from contextlib import contextmanager
+from pathlib import Path
 from tempfile import TemporaryDirectory
 from typing import TYPE_CHECKING, Generator
 
@@ -45,7 +46,7 @@ def copy_to_container(src: str, dst: str):  # noqa: ANN201, D103
             finally:
                 tar.close()
 
-            data = open(tar_path, "rb").read()  # noqa: SIM115, PTH123
+            data = Path(tar_path).read_bytes()
             container.put_archive(os.path.dirname(dst), data)  # noqa: PTH120
 
 
@@ -53,11 +54,10 @@ def copy_from_container(src: str, dst: str):  # noqa: ANN201, D103
     name, src = src.split(":")
     container = get_docker_client().containers.get(name)
     tar_path = dst + "_archive.tar"
-    f = open(tar_path, "wb")  # noqa: SIM115, PTH123
     bits, _ = container.get_archive(src)
-    for chunk in bits:
-        f.write(chunk)
-    f.close()
+    with open(tar_path, "wb") as f:  # noqa: PTH123
+        for chunk in bits:
+            f.write(chunk)
     tar = tarfile.open(tar_path)
     tar.extractall(dst)  # noqa: S202
     tar.close()

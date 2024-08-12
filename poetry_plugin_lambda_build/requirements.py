@@ -83,14 +83,13 @@ class RequirementsExporter:  # noqa: D101
         return pkg.dependency, pkg.package
 
     def _handle_develop_mode(self, package, allow_editable):  # noqa: ANN001, ANN202
-        if package.develop:  # noqa: SIM102
-            if not allow_editable:
-                self._io.write_error_line(
-                    f"<warning>Warning: {package.pretty_name} is locked in develop"
-                    " (editable) mode, which is incompatible with the"
-                    " constraints.txt format.</warning>"
-                )
-                return False
+        if package.develop and not allow_editable:
+            self._io.write_error_line(
+                f"<warning>Warning: {package.pretty_name} is locked in develop"
+                " (editable) mode, which is incompatible with the"
+                " constraints.txt format.</warning>"
+            )
+            return False
         return True
 
     @staticmethod
