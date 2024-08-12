@@ -34,9 +34,8 @@ from poetry_plugin_lambda_build.utils import (
 from poetry_plugin_lambda_build.zip import create_zip_package
 
 if TYPE_CHECKING:
-    from poetry.console.commands.command import Command
-
     from poetry_plugin_lambda_build.parameters import ParametersContainer
+    from poetry_plugin_lambda_build.plugin import BuildLambdaCommand
 
 CONTAINER_CACHE_DIR = "/opt/lambda/cache"
 CURRENT_WORK_DIR = os.getcwd()  # noqa: PTH109
@@ -68,13 +67,13 @@ class BuildType(enum.Enum):  # noqa: D101
             return cls.MERGED
 
 
-def get_requirements(cmd: Command, parameters: ParametersContainer) -> str:  # noqa: D103
+def get_requirements(cmd: BuildLambdaCommand, parameters: ParametersContainer) -> str:  # noqa: D103
     return RequirementsExporter(
         poetry=cmd.poetry, io=cmd.io, groups=parameters.groups
     ).export()
 
 
-def get_indexes(cmd: Command, parameters: ParametersContainer) -> str:  # noqa: D103
+def get_indexes(cmd: BuildLambdaCommand, parameters: ParametersContainer) -> list[str]:  # noqa: D103
     return RequirementsExporter(
         poetry=cmd.poetry, io=cmd.io, groups=parameters.groups
     ).export_indexes()
@@ -159,7 +158,9 @@ def verify_checksum(param):  # noqa: ANN001, ANN201, D103
 
 
 class Builder:  # noqa: D101
-    def __init__(self, cmd: Command, parameters: ParametersContainer) -> None:  # noqa: D107
+    def __init__(  # noqa: D107
+        self, cmd: BuildLambdaCommand, parameters: ParametersContainer
+    ) -> None:
         self.cmd = cmd
         self.parameters = parameters
         self._type: BuildType = BuildType.get_type(parameters)
@@ -171,17 +172,17 @@ class Builder:  # noqa: D101
         else:
             self.in_container = False
 
-    def format_cmd(self, string: str, **kwargs) -> tuple[list[str], str]:  # noqa: ANN003, D102
+    def format_cmd(self, cmd: list[str], **kwargs) -> tuple[list[str], list[str]]:  # noqa: ANN003, D102
         indexes = get_indexes(self.cmd, self.parameters)
         cmd = format_cmd(
-            string,
+            cmd,
             package_name=self.cmd.poetry.package.name,
             indexes=indexes,
             **kwargs,
         )
 
         print_safe_cmd = format_cmd(
-            string,
+            cmd,
             package_name=self.cmd.poetry.package.name,
             indexes=mask_string(" ".join(indexes)),
             **kwargs,

@@ -11,11 +11,12 @@ from operator import or_
 from typing import TYPE_CHECKING, Generator
 
 if TYPE_CHECKING:
-    from logging import Logger
     from pathlib import Path
 
+    from poetry_plugin_lambda_build.plugin import BuildLambdaCommand
 
-def join_cmds(*cmds: list[list[str]], joiner: str = "&&") -> list[str]:  # noqa: D103
+
+def join_cmds(*cmds: list[str], joiner: str = "&&") -> list[str]:  # noqa: D103
     _cmds = list(filter(lambda x: x, cmds))
     result = []
     for i, cmd in enumerate(_cmds):
@@ -59,8 +60,8 @@ def mask_string(s: str) -> str:  # noqa: D103
 
 
 def run_cmd(  # noqa: D103
-    *cmd: list[str],
-    logger: Logger | None = None,
+    *cmd: str,
+    logger: BuildLambdaCommand | None = None,
     stdout: int = subprocess.PIPE,
     stderr: int = subprocess.PIPE,
     **kwargs,  # noqa: ANN003
@@ -89,11 +90,11 @@ def run_cmd(  # noqa: D103
 def run_cmds(  # noqa: D103
     cmds: list[str],
     print_safe_cmds: list[str],
-    logger: Logger,
+    logger: BuildLambdaCommand,
     stdout: int = subprocess.PIPE,
     stderr: int = subprocess.PIPE,
     **kwargs,  # noqa: ANN003
-) -> int:
+) -> None:
     for cmd, print_safe_cmd in zip(cmd_split(cmds), cmd_split(print_safe_cmds)):
         logger.debug(f"Executing: {' '.join(print_safe_cmd)}")  # noqa: G004
         run_cmd(*cmd, logger=logger, stdout=stdout, stderr=stderr, **kwargs)

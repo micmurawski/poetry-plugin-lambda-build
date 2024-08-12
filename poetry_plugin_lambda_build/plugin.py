@@ -10,7 +10,7 @@ from poetry_plugin_lambda_build.parameters import ParametersContainer
 from poetry_plugin_lambda_build.recipes import Builder
 
 if TYPE_CHECKING:
-    from cleo.application import Application
+    from poetry.console.application import Application
 
 
 class BuildLambdaCommand(EnvCommand):  # noqa: D101
