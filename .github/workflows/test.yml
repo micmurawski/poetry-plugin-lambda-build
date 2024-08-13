@@ -22,4 +22,4 @@ jobs:
       - name: Lint
         run: poetry run ruff check
       - name: Test
-        run: poetry run pytest
+        run: poetry run pytest -v
