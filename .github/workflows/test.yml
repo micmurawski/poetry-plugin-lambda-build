@@ -17,8 +17,9 @@ jobs:
         uses: ./.github/actions/setup-poetry
         with:
           python-version: ${{ matrix.python-version }}
-      - name: Run Lint and Format
-        run: |
-          poetry run ruff check
-      - name: Run Pytest
+      - name: Check formatting
+        run: poetry run ruff format --diff
+      - name: Lint
+        run: poetry run ruff check
+      - name: Test
         run: poetry run pytest
