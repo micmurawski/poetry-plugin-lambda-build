@@ -1,4 +1,4 @@
-from __future__ import annotations
+from __future__ import annotations  # noqa: D100
 
 import os
 from fnmatch import fnmatch
@@ -14,7 +14,7 @@ compression = {
 }
 
 
-def create_zip_package(dir, output, exclude=None, **kwargs):
+def create_zip_package(dest_dir, output, exclude=None, **kwargs):  # noqa: ANN001, ANN003, ANN201, D103
     if "compression" in kwargs:
         kwargs["compression"] = compression[kwargs["compression"]]
 
@@ -22,12 +22,15 @@ def create_zip_package(dir, output, exclude=None, **kwargs):
         exclude = ["*.pyc", "*__pycache__/*"]
 
     with ZipFile(output, "w", **kwargs) as zip_file:
-        for i in os.walk(dir):
-            base_path, _, files = i
+        base_path: str
+        files: list[str]
+        for base_path, _, files in os.walk(dest_dir):
             for file in files:
-                file_path = os.path.join(base_path, file)
+                file_path = os.path.join(base_path, file)  # noqa: PTH118
 
                 if not reduce(
-                    or_, [fnmatch(file_path, pattern) for pattern in exclude], False
+                    or_,
+                    [fnmatch(file_path, pattern) for pattern in exclude],
+                    False,  # noqa: FBT003
                 ):
-                    zip_file.write(file_path, arcname=file_path.replace(dir, ""))
+                    zip_file.write(file_path, arcname=file_path.replace(dest_dir, ""))

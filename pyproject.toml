@@ -14,6 +14,7 @@ ruff = "^0.5.6"
 pytest = "^8.0.1"
 poetry = "^1.7.1"
 pytest-cov = "^5.0.0"
+setuptools = "*"
 
 [build-system]
 requires = ["poetry-core"]
@@ -38,3 +39,24 @@ command_line = "-m pytest"
 include = ["poetry_plugin_lambda_build/*.py"]
 omit = ["*__init__.py"]
 show_missing = true
+
+[tool.ruff]
+target-version = "py38"
+
+[tool.ruff.lint]
+select = ["ALL"]
+ignore = [
+    # Conflict with formatter
+    "COM812",
+    "ISC001",
+    # Incompatible with `no-blank-line-before-class` (D211)
+    "D203",
+    # Incompatible with `multi-line-summary-first-line` (D212)
+    "D213",
+]
+
+[tool.ruff.lint.extend-per-file-ignores]
+"tests/*" = [
+    # Asserts are obviously OK in tests
+    "S101",
+]

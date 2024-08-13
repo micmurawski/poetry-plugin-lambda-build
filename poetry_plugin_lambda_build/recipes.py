@@ -1,13 +1,13 @@
-from __future__ import annotations
+from __future__ import annotations  # noqa: D100
 
 import enum
 import os
 import shutil
 import zipfile
 from functools import wraps
+from pathlib import Path
 from tempfile import TemporaryDirectory
-
-from poetry.console.commands.command import Command
+from typing import TYPE_CHECKING
 
 from poetry_plugin_lambda_build.commands import (
     INSTALL_CMD_TMPL,
@@ -23,41 +23,44 @@ from poetry_plugin_lambda_build.docker import (
     exec_run_container,
     run_container,
 )
-from poetry_plugin_lambda_build.parameters import ParametersContainer
 from poetry_plugin_lambda_build.requirements import RequirementsExporter
 from poetry_plugin_lambda_build.utils import (
+    compute_checksum,
     format_cmd,
+    join_cmds,
     mask_string,
     remove_suffix,
     run_cmds,
-    join_cmds,
 )
 from poetry_plugin_lambda_build.zip import create_zip_package
-from poetry_plugin_lambda_build.utils import compute_checksum
+
+if TYPE_CHECKING:
+    from poetry_plugin_lambda_build.parameters import ParametersContainer
+    from poetry_plugin_lambda_build.plugin import BuildLambdaCommand
 
 CONTAINER_CACHE_DIR = "/opt/lambda/cache"
-CURRENT_WORK_DIR = os.getcwd()
+CURRENT_WORK_DIR = os.getcwd()  # noqa: PTH109
 
 
-class BuildLambdaPluginError(Exception):
+class BuildLambdaPluginError(Exception):  # noqa: D101
     pass
 
 
-class BuildType(enum.Enum):
+class BuildType(enum.Enum):  # noqa: D101
     IN_CONTAINER_MERGED = enum.auto()
     IN_CONTAINER_SEPARATED = enum.auto()
     MERGED = enum.auto()
     SEPARATED = enum.auto()
 
     @classmethod
-    def get_type(cls, parameters: dict):
+    def get_type(cls, parameters: dict):  # noqa: ANN206, D102
         layer = parameters.get("layer-artifact-path")
         function = parameters.get("function-artifact-path")
         container_img = parameters.get("docker-image")
         if container_img:
             if layer and function:
                 return cls.IN_CONTAINER_SEPARATED
-            else:
+            else:  # noqa: RET505
                 return cls.IN_CONTAINER_MERGED
         elif layer and function:
             return cls.SEPARATED
@@ -65,22 +68,22 @@ class BuildType(enum.Enum):
             return cls.MERGED
 
 
-def get_requirements(cmd: Command, parameters: ParametersContainer) -> str:
+def get_requirements(cmd: BuildLambdaCommand, parameters: ParametersContainer) -> str:  # noqa: D103
     return RequirementsExporter(
         poetry=cmd.poetry, io=cmd.io, groups=parameters.groups
     ).export()
 
 
-def get_indexes(cmd: Command, parameters: ParametersContainer) -> str:
+def get_indexes(cmd: BuildLambdaCommand, parameters: ParametersContainer) -> str:  # noqa: D103
     return RequirementsExporter(
         poetry=cmd.poetry, io=cmd.io, groups=parameters.groups
     ).export_indexes()
 
 
-def verify_checksum(param):
-    def decorator(fun):
+def verify_checksum(param):  # noqa: ANN001, ANN201, D103
+    def decorator(fun):  # noqa: ANN001, ANN202
         @wraps(fun)
-        def wrapper(self: Builder, *args, **kwargs):
+        def wrapper(self: Builder, *args, **kwargs):  # noqa: ANN002, ANN003, ANN202
             if self.parameters["no-checksum"]:
                 return fun(self, *args, **kwargs)
 
@@ -92,34 +95,32 @@ def verify_checksum(param):
                 if is_zip:
                     archive = zipfile.ZipFile(target, "r")
                     prev_checksum = archive.read(
-                        os.path.join(install_dir, "checksum")
+                        os.path.join(install_dir, "checksum")  # noqa: PTH118
                     ).decode()
                 else:
-                    prev_checksum = open(
-                        os.path.join(target, install_dir, "checksum")
-                    ).read()
+                    prev_checksum = Path(target, install_dir, "checksum").read_text()
             except (FileNotFoundError, KeyError):
                 prev_checksum = None
 
             if prefix == "layer":
                 curr_checksum = compute_checksum(
-                    os.path.join(CURRENT_WORK_DIR, "poetry.lock")
+                    os.path.join(CURRENT_WORK_DIR, "poetry.lock")  # noqa: PTH118
                 )
             elif prefix == "function":
                 curr_checksum = compute_checksum(
                     CURRENT_WORK_DIR,
                     exclude=[
-                        os.path.join(CURRENT_WORK_DIR, target),
-                        os.path.join(CURRENT_WORK_DIR, target, "*"),
-                        os.path.join(CURRENT_WORK_DIR, "poetry.lock"),
+                        os.path.join(CURRENT_WORK_DIR, target),  # noqa: PTH118
+                        os.path.join(CURRENT_WORK_DIR, target, "*"),  # noqa: PTH118
+                        os.path.join(CURRENT_WORK_DIR, "poetry.lock"),  # noqa: PTH118
                     ],
                 )
             else:
                 curr_checksum = compute_checksum(
                     CURRENT_WORK_DIR,
                     exclude=[
-                        os.path.join(CURRENT_WORK_DIR, target, "*"),
-                        os.path.join(CURRENT_WORK_DIR, target),
+                        os.path.join(CURRENT_WORK_DIR, target, "*"),  # noqa: PTH118
+                        os.path.join(CURRENT_WORK_DIR, target),  # noqa: PTH118
                     ],
                 )
             self.cmd.info("Checksum verification...")
@@ -128,23 +129,24 @@ def verify_checksum(param):
 
             if curr_checksum == prev_checksum:
                 self.cmd.info(f"No changes detected in target: {target}")
-                return
+                return None
 
             retval = fun(self, *args, **kwargs)
-            with TemporaryDirectory() as dir:
-                checksum_file_path = os.path.join(dir, "checksum")
-                with open(checksum_file_path, "w") as file:
+            with TemporaryDirectory() as temp_dir:
+                checksum_file_path = os.path.join(temp_dir, "checksum")  # noqa: PTH118
+                with open(checksum_file_path, "w") as file:  # noqa: PTH123
                     file.write(curr_checksum)
 
                 if is_zip:
                     with zipfile.ZipFile(target, "a") as zipf:
                         zipf.write(
-                            checksum_file_path, os.path.join(install_dir, "checksum")
+                            checksum_file_path,
+                            os.path.join(install_dir, "checksum"),  # noqa: PTH118
                         )
                 else:
                     shutil.copyfile(
                         checksum_file_path,
-                        os.path.join(CURRENT_WORK_DIR, target, install_dir, "checksum"),
+                        os.path.join(CURRENT_WORK_DIR, target, install_dir, "checksum"),  # noqa: PTH118
                     )
 
             return retval
@@ -154,8 +156,10 @@ def verify_checksum(param):
     return decorator
 
 
-class Builder:
-    def __init__(self, cmd: Command, parameters: ParametersContainer) -> None:
+class Builder:  # noqa: D101
+    def __init__(  # noqa: D107
+        self, cmd: BuildLambdaCommand, parameters: ParametersContainer
+    ) -> None:
         self.cmd = cmd
         self.parameters = parameters
         self._type: BuildType = BuildType.get_type(parameters)
@@ -167,17 +171,17 @@ class Builder:
         else:
             self.in_container = False
 
-    def format_cmd(self, string: str, **kwargs) -> tuple[list[str], str]:
+    def format_cmd(self, cmd: list[str], **kwargs) -> tuple[list[str], list[str]]:  # noqa: ANN003, D102
         indexes = get_indexes(self.cmd, self.parameters)
         cmd = format_cmd(
-            string,
+            cmd,
             package_name=self.cmd.poetry.package.name,
             indexes=indexes,
             **kwargs,
         )
 
         print_safe_cmd = format_cmd(
-            string,
+            cmd,
             package_name=self.cmd.poetry.package.name,
             indexes=mask_string(" ".join(indexes)),
             **kwargs,
@@ -185,7 +189,7 @@ class Builder:
 
         return cmd, print_safe_cmd
 
-    def _build_separate_layer_in_container(
+    def _build_separate_layer_in_container(  # noqa: ANN202
         self, requirements_path: str, layer_output_dir: str
     ):
         self.cmd.info("Running docker container...")
@@ -218,23 +222,23 @@ class Builder:
                 src=f"{container.id}:{CONTAINER_CACHE_DIR}/.", dst=layer_output_dir
             )
 
-    def _create_target(self, dir: str, target: str, exclude: None | list = None):
+    def _create_target(self, dest_dir: str, target: str, exclude: None | list = None):  # noqa: ANN202
         if target.endswith(".zip"):
             create_zip_package(
-                dir=dir,
+                dest_dir=dest_dir,
                 output=target,
                 exclude=exclude,
                 **self.parameters.get_section("zip"),
             )
         else:
             shutil.copytree(
-                dir,
+                dest_dir,
                 target,
                 dirs_exist_ok=True,
                 ignore=shutil.ignore_patterns(*exclude) if exclude else None,
             )
 
-    def _build_separate_layer_on_local(
+    def _build_separate_layer_on_local(  # noqa: ANN202
         self, requirements_path: str, layer_output_dir: str
     ):
         self.cmd.info("Installing requirements")
@@ -247,21 +251,21 @@ class Builder:
         run_cmds(cmds=cmd, print_safe_cmds=print_safe_cmd, logger=self.cmd)
 
     @verify_checksum("layer-artifact-path")
-    def build_separate_layer_package(self):
+    def build_separate_layer_package(self):  # noqa: ANN201, D102
         self.cmd.info("Building separate layer package...")
         with TemporaryDirectory() as tmp_dir:
             install_dir = self.parameters.get("layer-install-dir", "")
-            layer_output_dir = os.path.join(tmp_dir, "layer-output")
-            target = os.path.join(
+            layer_output_dir = os.path.join(tmp_dir, "layer-output")  # noqa: PTH118
+            target = os.path.join(  # noqa: PTH118
                 CURRENT_WORK_DIR, self.parameters.get("layer-artifact-path", "")
             )
-            requirements_path = os.path.join(tmp_dir, "requirements.txt")
-            layer_output_dir = os.path.join(layer_output_dir, install_dir)
-            os.makedirs(layer_output_dir, exist_ok=True)
+            requirements_path = os.path.join(tmp_dir, "requirements.txt")  # noqa: PTH118
+            layer_output_dir = os.path.join(layer_output_dir, install_dir)  # noqa: PTH118
+            os.makedirs(layer_output_dir, exist_ok=True)  # noqa: PTH103
 
             self.cmd.info("Generating requirements file...")
 
-            with open(requirements_path, "w") as f:
+            with open(requirements_path, "w") as f:  # noqa: PTH123
                 f.write(get_requirements(self.cmd, self.parameters))
 
             if self.in_container:
@@ -276,15 +280,15 @@ class Builder:
                 )
 
             self.cmd.info(f"Building {target}...")
-            os.makedirs(os.path.dirname(target), exist_ok=True)
+            os.makedirs(os.path.dirname(target), exist_ok=True)  # noqa: PTH103, PTH120
             self._create_target(
-                dir=remove_suffix(layer_output_dir, install_dir),
+                dest_dir=remove_suffix(layer_output_dir, install_dir),
                 target=target,
                 exclude=[requirements_path],
             )
             self.cmd.info(f"target successfully built: {target}...")
 
-    def _build_separated_function_in_container(self, package_dir: str):
+    def _build_separated_function_in_container(self, package_dir: str):  # noqa: ANN202
         with run_container(
             self.cmd, **self.parameters.get_section("docker"), working_dir="/"
         ) as container:
@@ -304,8 +308,8 @@ class Builder:
                 src=f"{container.id}:{CONTAINER_CACHE_DIR}/.", dst=package_dir
             )
 
-    def _build_separated_function_on_local(self, package_dir: str):
-        os.makedirs(package_dir, exist_ok=True)
+    def _build_separated_function_on_local(self, package_dir: str):  # noqa: ANN202
+        os.makedirs(package_dir, exist_ok=True)  # noqa: PTH103
 
         install_no_deps_cmd_tmpl = join_cmds(
             self.parameters.get("pre-install-script"), INSTALL_NO_DEPS_CMD_TMPL
@@ -318,29 +322,29 @@ class Builder:
         run_cmds(cmds=cmd, print_safe_cmds=print_safe_cmd, logger=self.cmd)
 
     @verify_checksum("function-artifact-path")
-    def build_separated_function_package(self):
+    def build_separated_function_package(self):  # noqa: ANN201, D102
         self.cmd.info("Building function package...")
         with TemporaryDirectory() as tmp_dir:
             install_dir = self.parameters.get("function-install-dir", "")
             package_dir = tmp_dir
-            target = os.path.join(
+            target = os.path.join(  # noqa: PTH118
                 CURRENT_WORK_DIR, self.parameters.get("function-artifact-path", "")
             )
-            package_dir = os.path.join(package_dir, install_dir)
+            package_dir = os.path.join(package_dir, install_dir)  # noqa: PTH118
             if self.in_container:
                 self._build_separated_function_in_container(package_dir)
             else:
                 self._build_separated_function_on_local(package_dir)
 
             self.cmd.info(f"Building target: {target}")
-            os.makedirs(os.path.dirname(target), exist_ok=True)
+            os.makedirs(os.path.dirname(target), exist_ok=True)  # noqa: PTH103, PTH120
             self._create_target(
-                dir=remove_suffix(package_dir, install_dir),
+                dest_dir=remove_suffix(package_dir, install_dir),
                 target=target,
             )
             self.cmd.info(f"Target successfully built: {target}...")
 
-    def _build_package_in_container(self, package_dir: str):
+    def _build_package_in_container(self, package_dir: str):  # noqa: ANN202
         self.cmd.info("Running container...")
         with run_container(
             self.cmd, **self.parameters.get_section("docker"), working_dir="/"
@@ -366,7 +370,7 @@ class Builder:
                 src=f"{container.id}:{CONTAINER_CACHE_DIR}/.", dst=package_dir
             )
 
-    def _build_package_on_local(self, package_dir: str):
+    def _build_package_on_local(self, package_dir: str):  # noqa: ANN202
         self.cmd.info("Building package on local")
 
         install_cmd_tmpl = join_cmds(
@@ -378,13 +382,13 @@ class Builder:
         run_cmds(cmds=cmd, print_safe_cmds=print_safe_cmd, logger=self.cmd)
 
     @verify_checksum("package-artifact-path")
-    def build_package(self):
+    def build_package(self):  # noqa: ANN201, D102
         self.cmd.info("Building package...")
         with TemporaryDirectory() as tmp_dir:
             install_dir = self.parameters.get("package-install-dir", "")
-            package_dir = os.path.join(tmp_dir, install_dir)
-            os.makedirs(package_dir, exist_ok=True)
-            target = os.path.join(
+            package_dir = os.path.join(tmp_dir, install_dir)  # noqa: PTH118
+            os.makedirs(package_dir, exist_ok=True)  # noqa: PTH103
+            target = os.path.join(  # noqa: PTH118
                 CURRENT_WORK_DIR, self.parameters.get("package-artifact-path", "")
             )
 
@@ -393,13 +397,13 @@ class Builder:
             else:
                 self._build_package_on_local(package_dir)
 
-            os.makedirs(os.path.dirname(target), exist_ok=True)
+            os.makedirs(os.path.dirname(target), exist_ok=True)  # noqa: PTH103, PTH120
             self._create_target(
-                dir=remove_suffix(package_dir, install_dir), target=target
+                dest_dir=remove_suffix(package_dir, install_dir), target=target
             )
             self.cmd.info(f"target successfully built: {target}...")
 
-    def build(self):
+    def build(self):  # noqa: ANN201, D102
         if self._type in (BuildType.IN_CONTAINER_SEPARATED, BuildType.SEPARATED):
             self.cmd.info("Building separated packages...")
             self.build_separated_function_package()

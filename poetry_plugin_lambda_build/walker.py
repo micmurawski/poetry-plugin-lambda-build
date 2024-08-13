@@ -1,4 +1,4 @@
-from __future__ import annotations
+from __future__ import annotations  # noqa: D100
 
 from typing import TYPE_CHECKING
 
@@ -18,7 +18,7 @@ if TYPE_CHECKING:
     from poetry.packages import Locker
 
 
-def get_python_version_region_markers(packages: list[Package]) -> list[BaseMarker]:
+def get_python_version_region_markers(packages: list[Package]) -> list[BaseMarker]:  # noqa: D103
     precision_breakpoint = 2
     markers = []
 
@@ -50,7 +50,7 @@ def get_python_version_region_markers(packages: list[Package]) -> list[BaseMarke
     return markers
 
 
-def get_project_dependency_packages(
+def get_project_dependency_packages(  # noqa: D103
     locker: Locker,
     project_requires: list[Dependency],
     root_package_name: NormalizedName,
@@ -103,7 +103,7 @@ def get_project_dependency_packages(
         yield DependencyPackage(dependency=dependency, package=package)
 
 
-def get_project_dependencies(
+def get_project_dependencies(  # noqa: D103
     project_requires: list[Dependency],
     locked_packages: list[Package],
     root_package_name: NormalizedName,
@@ -132,7 +132,7 @@ def get_project_dependencies(
     return nested_dependencies.items()
 
 
-def walk_dependencies(
+def walk_dependencies(  # noqa: C901, D103
     dependencies: list[Dependency],
     packages_by_name: dict[str, list[Package]],
     root_package_name: NormalizedName,
@@ -153,7 +153,7 @@ def walk_dependencies(
         )
 
         if not locked_package:
-            raise RuntimeError(f"Dependency walk failed at {requirement}")
+            raise RuntimeError(f"Dependency walk failed at {requirement}")  # noqa: EM102, TRY003
 
         if requirement.extras:
             locked_package = locked_package.with_features(requirement.extras)
@@ -208,10 +208,9 @@ def get_locked_package(
     packages_by_name: dict[str, list[Package]],
     decided: dict[Package, Dependency] | None = None,
 ) -> Package | None:
-    """
-    Internal helper to identify corresponding locked package using dependency
+    """Internal helper to identify corresponding locked package using dependency
     version constraints.
-    """
+    """  # noqa: D205, D401
     decided = decided or {}
 
     candidates = packages_by_name.get(dependency.name, [])
@@ -250,10 +249,10 @@ def get_locked_package(
         ]
 
         if not filtered_compatible_candidates:
-            # TODO: Support this case:
+            # TODO: Support this case:  # noqa: FIX002, TD002
             # https://github.com/python-poetry/poetry-plugin-export/issues/183
-            raise DependencyWalkerError(
-                f"The `{dependency.name}` package has the following compatible"
+            raise DependencyWalkerError(  # noqa: TRY003
+                f"The `{dependency.name}` package has the following compatible"  # noqa: EM102
                 f" candidates `{compatible_candidates}`;  but, the exporter dependency"
                 f" walker previously elected `{overlapping_candidates.pop()}` which is"
                 f" not compatible with the dependency `{dependency}`. Please contribute"
@@ -265,5 +264,5 @@ def get_locked_package(
     return next(iter(compatible_candidates), None)
 
 
-class DependencyWalkerError(Exception):
+class DependencyWalkerError(Exception):  # noqa: D101
     pass

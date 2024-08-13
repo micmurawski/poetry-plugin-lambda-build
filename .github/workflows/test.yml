@@ -3,13 +3,26 @@ name: Run Tests
 on: [pull_request, workflow_dispatch]
 
 jobs:
-  test_python38:
-    secrets: inherit
-    uses: ./.github/workflows/run_tests_linux.yml
-    with:
-      python-version: "3.8"
-  test_python312:
-    secrets: inherit
-    uses: ./.github/workflows/run_tests_linux.yml
-    with:
-      python-version: "3.12"
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    env:
+      FORCE_COLOR: "1"
+      PY_COLORS: "1"
+    strategy:
+      matrix:
+        python-version: ["3.8", "3.12"]
+      fail-fast: false
+    steps:
+      - name: Check out repo
+        uses: actions/checkout@v4
+      - name: Set up Poetry
+        uses: ./.github/actions/setup-poetry
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Check formatting
+        run: poetry run ruff format --diff
+      - name: Lint
+        run: poetry run ruff check
+      - name: Test
+        run: poetry run pytest -v

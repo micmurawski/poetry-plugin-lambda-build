@@ -1,0 +1,22 @@
+---
+name: Set up Poetry
+description: Sets up Poetry for a given version of Python and install project dependencies
+inputs:
+  python-version:
+    description: The version of Python to use
+    required: true
+runs:
+  using: composite
+  steps:
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ inputs.python-version }}
+        cache: pip
+        cache-dependency-path: poetry.lock
+    - name: Install Poetry
+      run: pipx install poetry==1.8.*
+      shell: sh
+    - name: Install project dependencies
+      run: poetry install
+      shell: sh
