@@ -6,6 +6,9 @@ jobs:
   test:
     name: Test
     runs-on: ubuntu-latest
+    env:
+      FORCE_COLOR: "1"
+      PY_COLORS: "1"
     strategy:
       matrix:
         python-version: ["3.8", "3.12"]
