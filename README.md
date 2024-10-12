@@ -20,7 +20,7 @@ Configure `pyproject.toml` with the following configuration. This is example for
 [tool.poetry-plugin-lambda-build]
 docker-image = "public.ecr.aws/sam/build-python3.11:latest-x86_64"
 docker-network = "host"
-layer-artifact_path = "artifacts/layer.zip"
+layer-artifact-path = "artifacts/layer.zip"
 layer-install-dir = "python"
 function-artifact-path = "artifacts/function.zip"
 ```
