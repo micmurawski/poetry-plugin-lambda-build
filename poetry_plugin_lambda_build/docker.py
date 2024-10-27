@@ -5,8 +5,9 @@ import tarfile
 from contextlib import contextmanager
 from tempfile import TemporaryDirectory
 from typing import Generator
-
+import shutil
 import docker
+import fnmatch
 from docker.models.containers import Container
 
 from poetry_plugin_lambda_build.utils import cd, cmd_split
@@ -28,9 +29,17 @@ def get_docker_client() -> docker.DockerClient:
     return docker.from_env()
 
 
-def copy_to_container(src: str, dst: str):
+def copy_to_container(src: str, dst: str, exclude: list | None = None):
+    if exclude is None:
+        exclude = []
+
     name, dst = dst.split(":")
     container = get_docker_client().containers.get(name)
+
+    def filter(tarinfo: tarfile.TarInfo):
+        is_ignored = any([fnmatch.fnmatch(tarinfo.path, ex) for ex in exclude])
+        if not is_ignored:
+            return tarinfo
 
     with TemporaryDirectory() as tmp_dir:
         src_name = os.path.basename(src)
@@ -39,7 +48,7 @@ def copy_to_container(src: str, dst: str):
         tar = tarfile.open(tar_path, mode="w")
         with cd(os.path.dirname(src)):
             try:
-                tar.add(src_name)
+                tar.add(src_name, filter=filter)
             finally:
                 tar.close()
 

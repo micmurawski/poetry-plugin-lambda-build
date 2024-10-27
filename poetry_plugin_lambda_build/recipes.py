@@ -193,7 +193,9 @@ class Builder:
             self.cmd, **self.parameters.get_section("docker")
         ) as container:
             copy_to_container(
-                src=requirements_path, dst=f"{container.id}:/requirements.txt"
+                src=requirements_path,
+                dst=f"{container.id}:/requirements.txt",
+                exclude=self.parameters["exclude"],
             )
             self.cmd.info("Installing requirements")
 
@@ -218,8 +220,9 @@ class Builder:
                 src=f"{container.id}:{CONTAINER_CACHE_DIR}/.", dst=layer_output_dir
             )
 
-    def _create_target(self, dir: str, target: str, additional_exclude: None | list = None):
-
+    def _create_target(
+        self, dir: str, target: str, additional_exclude: None | list = None
+    ):
         if target.endswith(".zip"):
             exclude = self.parameters["exclude"]
             if additional_exclude:
@@ -231,12 +234,13 @@ class Builder:
                 **self.parameters.get_section("zip"),
             )
         else:
-
             if additional_exclude:
-                ignore = shutil.ignore_patterns(*additional_exclude, *self.parameters["exclude"])
+                ignore = shutil.ignore_patterns(
+                    *additional_exclude, *self.parameters["exclude"]
+                )
             else:
                 ignore = shutil.ignore_patterns(*self.parameters["exclude"])
-            
+
             shutil.copytree(
                 dir,
                 target,
@@ -290,7 +294,7 @@ class Builder:
             self._create_target(
                 dir=remove_suffix(layer_output_dir, install_dir),
                 target=target,
-                exclude=[requirements_path],
+                additional_exclude=[requirements_path],
             )
             self.cmd.info(f"target successfully built: {target}...")
 
@@ -356,7 +360,9 @@ class Builder:
             self.cmd, **self.parameters.get_section("docker"), working_dir="/"
         ) as container:
             self.cmd.info("Coping content")
-            copy_to_container(f"{CURRENT_WORK_DIR}/.", f"{container.id}:/")
+            copy_to_container(
+                f"{CURRENT_WORK_DIR}/.", f"{container.id}:/", self.parameters["exclude"]
+            )
 
             install_in_container_cmd_tmpl = join_cmds(
                 self.parameters.get("pre-install-script"), INSTALL_IN_CONTAINER_CMD_TMPL

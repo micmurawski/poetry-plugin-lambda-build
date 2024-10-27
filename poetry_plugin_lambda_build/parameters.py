@@ -10,6 +10,7 @@ from poetry_plugin_lambda_build.utils import remove_prefix
 def comma_separated_collection(x: str) -> list[str]:
     return x.split(",")
 
+
 def parse_collection(val):
     if isinstance(val, list):
         return val
@@ -17,6 +18,7 @@ def parse_collection(val):
         return comma_separated_collection(val)
     else:
         raise TypeError(f"type for {val} not recognized.")
+
 
 ARGS = {
     "docker-image": ("The image to run", True, False, None, str),
@@ -149,8 +151,8 @@ ARGS = {
         True,
         False,
         ["*.pyc", "*__pycache__/*"],
-        parse_collection
-    )
+        parse_collection,
+    ),
 }
 
 
