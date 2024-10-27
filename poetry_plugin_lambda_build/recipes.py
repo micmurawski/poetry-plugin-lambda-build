@@ -218,8 +218,12 @@ class Builder:
                 src=f"{container.id}:{CONTAINER_CACHE_DIR}/.", dst=layer_output_dir
             )
 
-    def _create_target(self, dir: str, target: str, exclude: None | list = None):
+    def _create_target(self, dir: str, target: str, additional_exclude: None | list = None):
+
         if target.endswith(".zip"):
+            exclude = self.parameters["exclude"]
+            if additional_exclude:
+                exclude += additional_exclude
             create_zip_package(
                 dir=dir,
                 output=target,
@@ -227,11 +231,17 @@ class Builder:
                 **self.parameters.get_section("zip"),
             )
         else:
+
+            if additional_exclude:
+                ignore = shutil.ignore_patterns(*additional_exclude, *self.parameters["exclude"])
+            else:
+                ignore = shutil.ignore_patterns(*self.parameters["exclude"])
+            
             shutil.copytree(
                 dir,
                 target,
                 dirs_exist_ok=True,
-                ignore=shutil.ignore_patterns(*exclude) if exclude else None,
+                ignore=ignore,
             )
 
     def _build_separate_layer_on_local(

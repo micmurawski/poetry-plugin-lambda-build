@@ -4,13 +4,19 @@ import shlex
 from typing import Any
 
 from poetry.console.exceptions import PoetryConsoleError
-
 from poetry_plugin_lambda_build.utils import remove_prefix
 
 
 def comma_separated_collection(x: str) -> list[str]:
     return x.split(",")
 
+def parse_collection(val):
+    if isinstance(val, list):
+        return val
+    elif isinstance(val, str):
+        return comma_separated_collection(val)
+    else:
+        raise TypeError(f"type for {val} not recognized.")
 
 ARGS = {
     "docker-image": ("The image to run", True, False, None, str),
@@ -97,21 +103,21 @@ ARGS = {
         True,
         False,
         [],
-        comma_separated_collection,
+        parse_collection,
     ),
     "without": (
         "The dependency groups to ignore",
         True,
         False,
         [],
-        comma_separated_collection,
+        parse_collection,
     ),
     "with": (
         "The optional dependency groups to include",
         True,
         False,
         [],
-        comma_separated_collection,
+        parse_collection,
     ),
     "zip-compresslevel": (
         "None (default for the given compression type) or an integer "
@@ -138,6 +144,13 @@ ARGS = {
         None,
         shlex.split,
     ),
+    "exclude": (
+        'List of files that will be excluded from zip. By default: "*.pyc", "*__pycache__/*"',
+        True,
+        False,
+        ["*.pyc", "*__pycache__/*"],
+        parse_collection
+    )
 }
 
 
