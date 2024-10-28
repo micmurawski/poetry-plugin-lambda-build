@@ -143,7 +143,7 @@ ARGS = {
         shlex.split,
     ),
     "copy-to-container-ignore": (
-        "List of files that will be copied into building container. By default empty.",
+        "List of files that won't be copied into building container. By default empty.",
         True,
         False,
         [],
