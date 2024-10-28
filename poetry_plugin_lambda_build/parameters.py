@@ -142,7 +142,7 @@ ARGS = {
         None,
         shlex.split,
     ),
-    "docker_ignore": (
+    "copy-to-container-ignore": (
         "List of files that will be copied into building container. By default empty.",
         True,
         False,

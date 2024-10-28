@@ -195,7 +195,7 @@ class Builder:
             copy_to_container(
                 src=requirements_path,
                 dst=f"{container.id}:/requirements.txt",
-                ignore=self.parameters["docker_ignore"]
+                ignore=self.parameters["copy-to-container-ignore"]
             )
             self.cmd.info("Installing requirements")
 
@@ -293,7 +293,7 @@ class Builder:
             copy_to_container(
                 src=f"{CURRENT_WORK_DIR}/.",
                 dst=f"{container.id}:/",
-                ignore=self.parameters["docker_ignore"]
+                ignore=self.parameters["copy-to-container-ignore"]
             )
 
             install_in_container_no_deps_cmd_tmpl = join_cmds(
@@ -355,7 +355,7 @@ class Builder:
             copy_to_container(
                 f"{CURRENT_WORK_DIR}/.",
                 f"{container.id}:/",
-                ignore=self.parameters["docker_ignore"]
+                ignore=self.parameters["copy-to-container-ignore"]
             )
 
             install_in_container_cmd_tmpl = join_cmds(
