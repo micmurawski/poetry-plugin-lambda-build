@@ -195,7 +195,7 @@ class Builder:
             copy_to_container(
                 src=requirements_path,
                 dst=f"{container.id}:/requirements.txt",
-                exclude=self.parameters["exclude"],
+                ignore=self.parameters["docker_ignore"]
             )
             self.cmd.info("Installing requirements")
 
@@ -220,13 +220,8 @@ class Builder:
                 src=f"{container.id}:{CONTAINER_CACHE_DIR}/.", dst=layer_output_dir
             )
 
-    def _create_target(
-        self, dir: str, target: str, additional_exclude: None | list = None
-    ):
+    def _create_target(self, dir: str, target: str, exclude: None | list = None):
         if target.endswith(".zip"):
-            exclude = self.parameters["exclude"]
-            if additional_exclude:
-                exclude += additional_exclude
             create_zip_package(
                 dir=dir,
                 output=target,
@@ -234,18 +229,11 @@ class Builder:
                 **self.parameters.get_section("zip"),
             )
         else:
-            if additional_exclude:
-                ignore = shutil.ignore_patterns(
-                    *additional_exclude, *self.parameters["exclude"]
-                )
-            else:
-                ignore = shutil.ignore_patterns(*self.parameters["exclude"])
-
             shutil.copytree(
                 dir,
                 target,
                 dirs_exist_ok=True,
-                ignore=ignore,
+                ignore=shutil.ignore_patterns(*exclude) if exclude else None,
             )
 
     def _build_separate_layer_on_local(
@@ -294,7 +282,7 @@ class Builder:
             self._create_target(
                 dir=remove_suffix(layer_output_dir, install_dir),
                 target=target,
-                additional_exclude=[requirements_path],
+                exclude=[requirements_path],
             )
             self.cmd.info(f"target successfully built: {target}...")
 
@@ -302,7 +290,11 @@ class Builder:
         with run_container(
             self.cmd, **self.parameters.get_section("docker"), working_dir="/"
         ) as container:
-            copy_to_container(src=f"{CURRENT_WORK_DIR}/.", dst=f"{container.id}:/")
+            copy_to_container(
+                src=f"{CURRENT_WORK_DIR}/.",
+                dst=f"{container.id}:/",
+                ignore=self.parameters["docker_ignore"]
+            )
 
             install_in_container_no_deps_cmd_tmpl = join_cmds(
                 self.parameters.get("pre-install-script"),
@@ -361,7 +353,9 @@ class Builder:
         ) as container:
             self.cmd.info("Coping content")
             copy_to_container(
-                f"{CURRENT_WORK_DIR}/.", f"{container.id}:/", self.parameters["exclude"]
+                f"{CURRENT_WORK_DIR}/.",
+                f"{container.id}:/",
+                ignore=self.parameters["docker_ignore"]
             )
 
             install_in_container_cmd_tmpl = join_cmds(

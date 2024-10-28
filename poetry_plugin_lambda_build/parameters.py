@@ -7,15 +7,11 @@ from poetry.console.exceptions import PoetryConsoleError
 from poetry_plugin_lambda_build.utils import remove_prefix
 
 
-def comma_separated_collection(x: str) -> list[str]:
-    return x.split(",")
-
-
-def parse_collection(val):
+def parse_collection(val: str) -> list[str]:
     if isinstance(val, list):
         return val
     elif isinstance(val, str):
-        return comma_separated_collection(val)
+        return val.split(",")
     else:
         raise TypeError(f"type for {val} not recognized.")
 
@@ -146,11 +142,11 @@ ARGS = {
         None,
         shlex.split,
     ),
-    "exclude": (
-        'List of files that will be excluded from zip. By default: "*.pyc", "*__pycache__/*"',
+    "docker_ignore": (
+        "List of files that will be copied into building container. By default empty.",
         True,
         False,
-        ["*.pyc", "*__pycache__/*"],
+        [],
         parse_collection,
     ),
 }
