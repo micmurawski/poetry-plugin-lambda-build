@@ -48,6 +48,16 @@ ZIP_BUILDS_PARAMS = {
             ),
         ],
     ),
+    "all in one, in container, excluded file": (
+        {
+            "docker-image": DOCKER_IMG, "package-artifact-path": "function.zip", "package-install-dir": "python", "copy-to-container-ignore": ["./test_project/handler.py"]},
+        {},
+        [
+            lambda: assert_file_not_exists_in_zip(
+                "function.zip", files=["python/requirements.txt", "python/test_project/handler.py"]
+            ),
+        ],
+    ),
     "layer function separated on local": (
         {
             "layer-install-dir": "python",
