@@ -16,7 +16,7 @@ from poetry_plugin_export.walker import get_project_dependency_packages
 
 poetry_version = Version(__version__)
 
-if Version("1.7.1") <= poetry_version < Version("2.0.0"):
+if poetry_version < Version("2.0.0"):
     from poetry.console.exceptions import GroupNotFound as GroupNotFoundError
 else:
     from poetry.console.exceptions import GroupNotFoundError
