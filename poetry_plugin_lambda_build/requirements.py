@@ -6,11 +6,20 @@ from typing import Collection
 
 from cleo.io.io import IO
 from packaging.utils import NormalizedName
+from packaging.version import Version
+from poetry.__version__ import __version__
 from poetry.console.exceptions import GroupNotFound
 from poetry.core.packages.project_package import ProjectPackage
 from poetry.poetry import Poetry
 from poetry.repositories.http_repository import HTTPRepository
 from poetry_plugin_export.walker import get_project_dependency_packages
+
+poetry_version = Version(__version__)
+
+if Version("1.7.1") <= poetry_version < Version("2.0.0"):
+    from poetry.console.exceptions import GroupNotFound as GroupNotFoundError
+else:
+    from poetry.console.exceptions import GroupNotFoundError
 
 
 class RequirementsExporter:
@@ -55,7 +64,7 @@ class RequirementsExporter:
                     for opt in sorted(invalid_options[group])
                 )
                 message_parts.append(f"{group} (via {opts})")
-            raise GroupNotFound(f"Group(s) not found: {', '.join(message_parts)}")
+            raise GroupNotFoundError(f"Group(s) not found: {', '.join(message_parts)}")
 
     @property
     def activated_groups(self) -> set[str]:
@@ -188,7 +197,7 @@ class RequirementsExporter:
         content += "\n"
 
         if indexes:
-            content = self.export_indexes() + "\n\n" + content
+            content = "\n".join(self.export_indexes()) + "\n\n" + content
 
         return content
 
