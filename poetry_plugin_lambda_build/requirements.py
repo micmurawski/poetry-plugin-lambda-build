@@ -8,7 +8,6 @@ from cleo.io.io import IO
 from packaging.utils import NormalizedName
 from packaging.version import Version
 from poetry.__version__ import __version__
-from poetry.console.exceptions import GroupNotFound
 from poetry.core.packages.project_package import ProjectPackage
 from poetry.poetry import Poetry
 from poetry.repositories.http_repository import HTTPRepository
