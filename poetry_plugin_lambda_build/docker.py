@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import fnmatch
 import os
 import tarfile
 from contextlib import contextmanager
@@ -28,9 +29,17 @@ def get_docker_client() -> docker.DockerClient:
     return docker.from_env()
 
 
-def copy_to_container(src: str, dst: str):
+def copy_to_container(src: str, dst: str, ignore: list | None = None):
+    if ignore is None:
+        ignore = []
+
     name, dst = dst.split(":")
     container = get_docker_client().containers.get(name)
+
+    def _filter(tarinfo: tarfile.TarInfo):
+        is_ignored = any([fnmatch.fnmatch(tarinfo.path, ex) for ex in ignore])
+        if not is_ignored:
+            return tarinfo
 
     with TemporaryDirectory() as tmp_dir:
         src_name = os.path.basename(src)
@@ -39,7 +48,7 @@ def copy_to_container(src: str, dst: str):
         tar = tarfile.open(tar_path, mode="w")
         with cd(os.path.dirname(src)):
             try:
-                tar.add(src_name)
+                tar.add(src_name, filter=_filter)
             finally:
                 tar.close()
 

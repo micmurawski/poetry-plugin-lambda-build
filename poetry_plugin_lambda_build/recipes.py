@@ -193,7 +193,9 @@ class Builder:
             self.cmd, **self.parameters.get_section("docker")
         ) as container:
             copy_to_container(
-                src=requirements_path, dst=f"{container.id}:/requirements.txt"
+                src=requirements_path,
+                dst=f"{container.id}:/requirements.txt",
+                ignore=self.parameters["copy-to-container-ignore"]
             )
             self.cmd.info("Installing requirements")
 
@@ -288,7 +290,11 @@ class Builder:
         with run_container(
             self.cmd, **self.parameters.get_section("docker"), working_dir="/"
         ) as container:
-            copy_to_container(src=f"{CURRENT_WORK_DIR}/.", dst=f"{container.id}:/")
+            copy_to_container(
+                src=f"{CURRENT_WORK_DIR}/.",
+                dst=f"{container.id}:/",
+                ignore=self.parameters["copy-to-container-ignore"]
+            )
 
             install_in_container_no_deps_cmd_tmpl = join_cmds(
                 self.parameters.get("pre-install-script"),
@@ -346,7 +352,11 @@ class Builder:
             self.cmd, **self.parameters.get_section("docker"), working_dir="/"
         ) as container:
             self.cmd.info("Coping content")
-            copy_to_container(f"{CURRENT_WORK_DIR}/.", f"{container.id}:/")
+            copy_to_container(
+                f"{CURRENT_WORK_DIR}/.",
+                f"{container.id}:/",
+                ignore=self.parameters["copy-to-container-ignore"]
+            )
 
             install_in_container_cmd_tmpl = join_cmds(
                 self.parameters.get("pre-install-script"), INSTALL_IN_CONTAINER_CMD_TMPL
