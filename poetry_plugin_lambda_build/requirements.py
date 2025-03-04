@@ -11,7 +11,7 @@ from poetry.__version__ import __version__
 from poetry.core.packages.project_package import ProjectPackage
 from poetry.poetry import Poetry
 from poetry.repositories.http_repository import HTTPRepository
-from poetry_plugin_export.walker import get_project_dependency_packages
+from poetry_plugin_lambda_build.walker import get_project_dependency_packages
 
 poetry_version = Version(__version__)
 
