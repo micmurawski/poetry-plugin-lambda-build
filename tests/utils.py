@@ -1,11 +1,12 @@
 from __future__ import annotations
 
 import os
-import zipfile
 import subprocess
-from logging import Logger
 import sys
-from poetry_plugin_lambda_build.utils import run_cmd, remove_prefix
+import zipfile
+from logging import Logger
+
+from poetry_plugin_lambda_build.utils import remove_prefix, run_cmd
 
 
 def run_python_cmd(

@@ -19,7 +19,6 @@ if TYPE_CHECKING:
 
 
 def get_python_version_region_markers(packages: list[Package]) -> list[BaseMarker]:
-    precision_breakpoint = 2
     markers = []
 
     regions = constraint_regions([package.python_constraint for package in packages])
@@ -28,9 +27,7 @@ def get_python_version_region_markers(packages: list[Package]) -> list[BaseMarke
         if region.min is not None:
             min_operator = ">=" if region.include_min else ">"
             marker_name = (
-                "python_full_version"
-                if region.min.precision > precision_breakpoint
-                else "python_version"
+                "python_full_version" if region.min.precision > 2 else "python_version"
             )
             lo = SingleMarker(marker_name, f"{min_operator} {region.min}")
             marker = marker.intersect(lo)
@@ -38,9 +35,7 @@ def get_python_version_region_markers(packages: list[Package]) -> list[BaseMarke
         if region.max is not None:
             max_operator = "<=" if region.include_max else "<"
             marker_name = (
-                "python_full_version"
-                if region.max.precision > precision_breakpoint
-                else "python_version"
+                "python_full_version" if region.max.precision > 2 else "python_version"
             )
             hi = SingleMarker(marker_name, f"{max_operator} {region.max}")
             marker = marker.intersect(hi)
@@ -61,9 +56,9 @@ def get_project_dependency_packages(
     if project_python_marker is not None:
         marked_requires: list[Dependency] = []
         for require in project_requires:
-            require_clone = require.clone()
-            require_clone.marker = require.marker.intersect(project_python_marker)
-            marked_requires.append(require_clone)
+            require = require.clone()
+            require.marker = require.marker.intersect(project_python_marker)
+            marked_requires.append(require)
         project_requires = marked_requires
 
     repository = locker.locked_repository()
@@ -248,7 +243,7 @@ def get_locked_package(
             for package in compatible_candidates
             if package in overlapping_candidates
         ]
-
+        #raise Exception(overlapping_candidates, filtered_compatible_candidates, not filtered_compatible_candidates)
         if not filtered_compatible_candidates:
             # TODO: Support this case:
             # https://github.com/python-poetry/poetry-plugin-export/issues/183
@@ -263,6 +258,28 @@ def get_locked_package(
         compatible_candidates = filtered_compatible_candidates
 
     return next(iter(compatible_candidates), None)
+
+
+def get_project_dependency_packages2(
+    locker: Locker,
+    project_python_marker: BaseMarker | None = None,
+    groups: Collection[str] = (),
+    extras: Collection[NormalizedName] = (),
+) -> Iterator[DependencyPackage]:
+    for package, info in locker.locked_packages().items():
+        if not info.groups.intersection(groups):
+            continue
+
+        marker = info.get_marker(groups)
+        if not marker.validate({"extra": extras}):
+            continue
+
+        if project_python_marker:
+            marker = project_python_marker.intersect(marker)
+
+        package.marker = marker
+
+        yield DependencyPackage(dependency=package.to_dependency(), package=package)
 
 
 class DependencyWalkerError(Exception):

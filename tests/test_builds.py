@@ -8,14 +8,10 @@ from pathlib import Path
 import pytest
 
 from poetry_plugin_lambda_build.utils import cd
-from tests.utils import (
-    assert_file_exists_in_dir,
-    assert_file_exists_in_zip,
-    assert_file_not_exists_in_dir,
-    assert_file_not_exists_in_zip,
-    run_poetry_cmd,
-    update_pyproject_toml,
-)
+from tests.utils import (assert_file_exists_in_dir, assert_file_exists_in_zip,
+                         assert_file_not_exists_in_dir,
+                         assert_file_not_exists_in_zip, run_poetry_cmd,
+                         update_pyproject_toml)
 
 
 @pytest.fixture(scope="session", autouse=True)

@@ -10,30 +10,19 @@ from tempfile import TemporaryDirectory
 from poetry.console.commands.command import Command
 
 from poetry_plugin_lambda_build.commands import (
-    INSTALL_CMD_TMPL,
-    INSTALL_DEPS_CMD_IN_CONTAINER_TMPL,
-    INSTALL_DEPS_CMD_TMPL,
-    INSTALL_IN_CONTAINER_CMD_TMPL,
-    INSTALL_IN_CONTAINER_NO_DEPS_CMD_TMPL,
-    INSTALL_NO_DEPS_CMD_TMPL,
-)
-from poetry_plugin_lambda_build.docker import (
-    copy_from_container,
-    copy_to_container,
-    exec_run_container,
-    run_container,
-)
+    INSTALL_CMD_TMPL, INSTALL_DEPS_CMD_IN_CONTAINER_TMPL,
+    INSTALL_DEPS_CMD_TMPL, INSTALL_IN_CONTAINER_CMD_TMPL,
+    INSTALL_IN_CONTAINER_NO_DEPS_CMD_TMPL, INSTALL_NO_DEPS_CMD_TMPL)
+from poetry_plugin_lambda_build.docker import (copy_from_container,
+                                               copy_to_container,
+                                               exec_run_container,
+                                               run_container)
 from poetry_plugin_lambda_build.parameters import ParametersContainer
 from poetry_plugin_lambda_build.requirements import RequirementsExporter
-from poetry_plugin_lambda_build.utils import (
-    format_cmd,
-    mask_string,
-    remove_suffix,
-    run_cmds,
-    join_cmds,
-)
+from poetry_plugin_lambda_build.utils import (compute_checksum, format_cmd,
+                                              join_cmds, mask_string,
+                                              remove_suffix, run_cmds)
 from poetry_plugin_lambda_build.zip import create_zip_package
-from poetry_plugin_lambda_build.utils import compute_checksum
 
 CONTAINER_CACHE_DIR = "/opt/lambda/cache"
 CURRENT_WORK_DIR = os.getcwd()
@@ -66,14 +55,18 @@ class BuildType(enum.Enum):
 
 
 def get_requirements(cmd: Command, parameters: ParametersContainer) -> str:
+    groups = parameters.groups
+    selected_groups = groups["only"] or groups["with"].difference(groups["without"])
     return RequirementsExporter(
-        poetry=cmd.poetry, io=cmd.io, groups=parameters.groups
+        poetry=cmd.poetry, io=cmd.io, groups=selected_groups
     ).export()
 
 
 def get_indexes(cmd: Command, parameters: ParametersContainer) -> str:
+    groups = parameters.groups
+    selected_groups = groups["only"] or groups["with"].difference(groups["without"])
     return RequirementsExporter(
-        poetry=cmd.poetry, io=cmd.io, groups=parameters.groups
+        poetry=cmd.poetry, io=cmd.io, groups=selected_groups
     ).export_indexes()
 
 
@@ -368,14 +361,20 @@ class Builder:
 
     def _build_package_on_local(self, package_dir: str):
         self.cmd.info("Building package on local")
+        with TemporaryDirectory() as tmp_dir:
+            req_path = os.path.join(tmp_dir, "requirements.txt")
+            with open(os.path.join(tmp_dir, "requirements.txt"), "w") as file:
+                file.write(get_requirements(self.cmd, self.parameters))
 
-        install_cmd_tmpl = join_cmds(
-            self.parameters.get("pre-install-script"), INSTALL_CMD_TMPL
-        )
-
-        cmd, print_safe_cmd = self.format_cmd(install_cmd_tmpl, output_dir=package_dir)
-
-        run_cmds(cmds=cmd, print_safe_cmds=print_safe_cmd, logger=self.cmd)
+            install_cmd_tmpl = join_cmds(
+                self.parameters.get("pre-install-script"), INSTALL_CMD_TMPL, INSTALL_DEPS_CMD_TMPL
+            )
+            cmd, print_safe_cmd = self.format_cmd(
+                install_cmd_tmpl,
+                output_dir=package_dir,
+                requirements=req_path
+            )
+            run_cmds(cmds=cmd, print_safe_cmds=print_safe_cmd, logger=self.cmd)
 
     @verify_checksum("package-artifact-path")
     def build_package(self):
