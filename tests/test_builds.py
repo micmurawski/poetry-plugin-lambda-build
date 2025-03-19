@@ -8,10 +8,14 @@ from pathlib import Path
 import pytest
 
 from poetry_plugin_lambda_build.utils import cd
-from tests.utils import (assert_file_exists_in_dir, assert_file_exists_in_zip,
-                         assert_file_not_exists_in_dir,
-                         assert_file_not_exists_in_zip, run_poetry_cmd,
-                         update_pyproject_toml)
+from tests.utils import (
+    assert_file_exists_in_dir,
+    assert_file_exists_in_zip,
+    assert_file_not_exists_in_dir,
+    assert_file_not_exists_in_zip,
+    run_poetry_cmd,
+    update_pyproject_toml,
+)
 
 
 @pytest.fixture(scope="session", autouse=True)
@@ -185,12 +189,12 @@ DIR_BUILDS_PARAMS = {
 )
 def test_zip_builds(config: dict, args: dict, assert_files: list, tmp_path: Path):
     with cd(tmp_path):
-        handler_file = "src/test_project/handler.py"
+        handler_file = "test_project/handler.py"
         assert run_poetry_cmd("new", "test-project") == 0
         with cd(tmp_path / "test-project"):
             assert run_poetry_cmd("add", "requests") == 0
             assert run_poetry_cmd("add", "pytest", "--group=test") == 0
-            open(tmp_path / "test-project"/ handler_file, "wb").close()
+            open(handler_file, "w").close()
 
             if PYTHON_VER == "3.8":
                 config["pre-install-script"] = (
@@ -200,7 +204,7 @@ def test_zip_builds(config: dict, args: dict, assert_files: list, tmp_path: Path
             if config:
                 update_pyproject_toml(**config)
             arguments = " ".join(f"{k}={v}" for k, v in args.items())
-            assert run_poetry_cmd("build-lambda", arguments, "-vv") == 0
+            assert run_poetry_cmd("build-lambda", arguments, "-v") == 0
             for files_assertion in assert_files:
                 files_assertion()
 
@@ -212,12 +216,12 @@ def test_zip_builds(config: dict, args: dict, assert_files: list, tmp_path: Path
 )
 def test_dir_builds(config: dict, args: dict, assert_files: list, tmp_path: Path):
     with cd(tmp_path):
-        handler_file = "src/test_project/handler.py"
+        handler_file = "test_project/handler.py"
         assert run_poetry_cmd("new", "test-project") == 0
         with cd(tmp_path / "test-project"):
             assert run_poetry_cmd("add", "requests") == 0
             assert run_poetry_cmd("add", "pytest", "--group=test") == 0
-            open(tmp_path / "test-project"/ handler_file, "wb").close()
+            open(handler_file, "w").close()
 
             if PYTHON_VER == "3.8":
                 config["pre-install-script"] = (
@@ -227,6 +231,6 @@ def test_dir_builds(config: dict, args: dict, assert_files: list, tmp_path: Path
             if config:
                 update_pyproject_toml(**config)
             arguments = " ".join(f"{k}={v}" for k, v in args.items())
-            assert run_poetry_cmd("build-lambda", arguments, "-vv") == 0
+            assert run_poetry_cmd("build-lambda", arguments, "-v") == 0
             for files_assertion in assert_files:
                 files_assertion()
