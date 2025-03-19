@@ -185,38 +185,10 @@ class RequirementsExporter:
         content += "\n"
 
         if indexes and self._with_urls:
-            # If we have extra indexes, we add them to the beginning of the output
-            indexes_header = ""
-            has_pypi_repository = any(
-                r.name.lower() == "pypi" for r in self._poetry.pool.all_repositories
-            )
-            # Iterate over repositories so that we get the repository with the highest
-            # priority first so that --index-url comes before --extra-index-url
-            for repository in self._poetry.pool.all_repositories:
-                if (
-                    not isinstance(repository, HTTPRepository)
-                    or repository.url not in indexes
-                ):
-                    continue
+            indexes_header = "".join(self.export_indexes())
 
-                url = (
-                    repository.authenticated_url
-                    if self._with_credentials
-                    else repository.url
-                )
-                parsed_url = urllib.parse.urlsplit(url)
-                if parsed_url.scheme == "http":
-                    indexes_header += f"--trusted-host {parsed_url.netloc}\n"
-                if (
-                    not has_pypi_repository
-                    and repository is self._poetry.pool.repositories[0]
-                ):
-                    indexes_header += f"--index-url {url}\n"
-                else:
-                    indexes_header += f"--extra-index-url {url}\n"
-
-            content = indexes_header + "\n" + content
-
+            if indexes_header:
+                content = indexes_header + "\n" + content
         return content
 
     _export_constraints_txt = partialmethod(
@@ -243,8 +215,7 @@ class RequirementsExporter:
                 not has_pypi_repository
                 and repository is self._poetry.pool.repositories[0]
             ):
-                args += ["--index-url", url]
+                args += ["--index-url", f"{url}\n"]
             else:
-                args += ["--extra-index-url", url]
-
+                args += ["--extra-index-url", f"{url}\n"]
         return args

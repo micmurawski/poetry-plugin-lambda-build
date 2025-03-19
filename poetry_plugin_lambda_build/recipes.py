@@ -186,7 +186,7 @@ class Builder:
             self.cmd, **self.parameters.get_section("docker")
         ) as container:
             copy_to_container(
-                src=requirements_path, dst=f"{container.id}:/requirements.txt"
+                src=requirements_path, dst=f"{container.id}:/tmp/requirements.txt"
             )
             self.cmd.info("Installing requirements")
 
@@ -197,7 +197,7 @@ class Builder:
             cmd, print_safe_cmd = self.format_cmd(
                 install_deps_cmd_in_container_tmpl,
                 output_dir=CONTAINER_CACHE_DIR,
-                requirements="/requirements.txt",
+                requirements="/tmp/requirements.txt",
             )
 
             exec_run_container(
@@ -333,7 +333,7 @@ class Builder:
             )
             self.cmd.info(f"Target successfully built: {target}...")
 
-    def _build_package_in_container(self, package_dir: str):
+    def _build_package_in_container(self, package_dir: str, req_path: str | None):
         self.cmd.info("Running container...")
         with run_container(
             self.cmd, **self.parameters.get_section("docker"), working_dir="/"
@@ -344,10 +344,22 @@ class Builder:
             install_in_container_cmd_tmpl = join_cmds(
                 self.parameters.get("pre-install-script"), INSTALL_IN_CONTAINER_CMD_TMPL
             )
-            cmd, print_safe_cmd = self.format_cmd(
-                install_in_container_cmd_tmpl,
-                output_dir=CONTAINER_CACHE_DIR,
-            )
+            if req_path:
+                copy_to_container(req_path, f"{container.id}:/tmp/requirements.txt")
+                install_in_container_cmd_tmpl = join_cmds(
+                    install_in_container_cmd_tmpl,
+                    INSTALL_DEPS_CMD_TMPL
+                )
+                cmd, print_safe_cmd = self.format_cmd(
+                    install_in_container_cmd_tmpl,
+                    output_dir=CONTAINER_CACHE_DIR,
+                    requirements="/tmp/requirements.txt"
+                )
+            else:
+                cmd, print_safe_cmd = self.format_cmd(
+                    install_in_container_cmd_tmpl,
+                    output_dir=CONTAINER_CACHE_DIR,
+                )
 
             exec_run_container(
                 logger=self.cmd,
@@ -359,26 +371,33 @@ class Builder:
                 src=f"{container.id}:{CONTAINER_CACHE_DIR}/.", dst=package_dir
             )
 
-    def _build_package_on_local(self, package_dir: str):
+    def _build_package_on_local(self, package_dir: str, req_path: str | None):
         self.cmd.info("Building package on local")
-        with TemporaryDirectory() as tmp_dir:
-            req_path = os.path.join(tmp_dir, "requirements.txt")
-            with open(os.path.join(tmp_dir, "requirements.txt"), "w") as file:
-                file.write(get_requirements(self.cmd, self.parameters))
-
-            install_cmd_tmpl = join_cmds(
-                self.parameters.get("pre-install-script"), INSTALL_CMD_TMPL, INSTALL_DEPS_CMD_TMPL
-            )
+        install_cmd_tmpl = join_cmds(
+            self.parameters.get("pre-install-script"), INSTALL_CMD_TMPL
+        )
+        if req_path:
+                install_cmd_tmpl = join_cmds(
+                    install_cmd_tmpl, INSTALL_DEPS_CMD_TMPL
+                )
+                cmd, print_safe_cmd = self.format_cmd(
+                    install_cmd_tmpl,
+                    output_dir=package_dir,
+                    requirements=req_path
+                )
+                run_cmds(cmds=cmd, print_safe_cmds=print_safe_cmd, logger=self.cmd)
+        else:
             cmd, print_safe_cmd = self.format_cmd(
-                install_cmd_tmpl,
-                output_dir=package_dir,
-                requirements=req_path
+                    install_cmd_tmpl,
+                    output_dir=package_dir
             )
             run_cmds(cmds=cmd, print_safe_cmds=print_safe_cmd, logger=self.cmd)
+
 
     @verify_checksum("package-artifact-path")
     def build_package(self):
         self.cmd.info("Building package...")
+        req = get_requirements(self.cmd, self.parameters)
         with TemporaryDirectory() as tmp_dir:
             install_dir = self.parameters.get("package-install-dir", "")
             package_dir = os.path.join(tmp_dir, install_dir)
@@ -386,11 +405,19 @@ class Builder:
             target = os.path.join(
                 CURRENT_WORK_DIR, self.parameters.get("package-artifact-path", "")
             )
+            req_path = None
+            if req:
+                req_path = os.path.join(tmp_dir, "requirements.txt")
+                with open(req_path, "w") as file:
+                    file.write(req)
 
             if self.in_container:
-                self._build_package_in_container(package_dir)
+                self._build_package_in_container(package_dir, req_path)
             else:
-                self._build_package_on_local(package_dir)
+                self._build_package_on_local(package_dir, req_path)
+
+            if req_path:
+                os.remove(req_path)
 
             os.makedirs(os.path.dirname(target), exist_ok=True)
             self._create_target(

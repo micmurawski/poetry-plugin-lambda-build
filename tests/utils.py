@@ -16,8 +16,9 @@ def run_python_cmd(
     stderr: int = subprocess.PIPE,
     **kwargs,
 ) -> int:
+    filtered_cmd = [c for c in cmd if c]
     return run_cmd(
-        sys.executable, *cmd, logger=logger, stdout=stdout, stderr=stderr, **kwargs
+        sys.executable, *filtered_cmd, logger=logger, stdout=stdout, stderr=stderr, **kwargs
     )
 
 

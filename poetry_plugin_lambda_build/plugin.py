@@ -35,9 +35,8 @@ class BuildLambdaCommand(EnvCommand):
         if plugin_conf:
             for k in plugin_conf:
                 self.container.put(k, plugin_conf[k])
-
+        
         self.container.parse_tokens(self.io.input._tokens[1:])
-
         return self.container
 
     def handle(self) -> Any:

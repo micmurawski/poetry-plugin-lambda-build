@@ -185,12 +185,12 @@ DIR_BUILDS_PARAMS = {
 )
 def test_zip_builds(config: dict, args: dict, assert_files: list, tmp_path: Path):
     with cd(tmp_path):
-        handler_file = "test_project/handler.py"
+        handler_file = "src/test_project/handler.py"
         assert run_poetry_cmd("new", "test-project") == 0
         with cd(tmp_path / "test-project"):
             assert run_poetry_cmd("add", "requests") == 0
             assert run_poetry_cmd("add", "pytest", "--group=test") == 0
-            open(handler_file, "w").close()
+            open(tmp_path / "test-project"/ handler_file, "wb").close()
 
             if PYTHON_VER == "3.8":
                 config["pre-install-script"] = (
@@ -200,7 +200,7 @@ def test_zip_builds(config: dict, args: dict, assert_files: list, tmp_path: Path
             if config:
                 update_pyproject_toml(**config)
             arguments = " ".join(f"{k}={v}" for k, v in args.items())
-            assert run_poetry_cmd("build-lambda", arguments, "-v") == 0
+            assert run_poetry_cmd("build-lambda", arguments, "-vv") == 0
             for files_assertion in assert_files:
                 files_assertion()
 
@@ -212,7 +212,7 @@ def test_zip_builds(config: dict, args: dict, assert_files: list, tmp_path: Path
 )
 def test_dir_builds(config: dict, args: dict, assert_files: list, tmp_path: Path):
     with cd(tmp_path):
-        handler_file = "test_project/handler.py"
+        handler_file = "src/test_project/handler.py"
         assert run_poetry_cmd("new", "test-project") == 0
         with cd(tmp_path / "test-project"):
             assert run_poetry_cmd("add", "requests") == 0
@@ -227,6 +227,6 @@ def test_dir_builds(config: dict, args: dict, assert_files: list, tmp_path: Path
             if config:
                 update_pyproject_toml(**config)
             arguments = " ".join(f"{k}={v}" for k, v in args.items())
-            assert run_poetry_cmd("build-lambda", arguments, "-v") == 0
+            assert run_poetry_cmd("build-lambda", arguments, "-vv") == 0
             for files_assertion in assert_files:
                 files_assertion()
