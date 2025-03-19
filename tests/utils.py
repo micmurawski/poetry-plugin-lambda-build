@@ -1,12 +1,11 @@
 from __future__ import annotations
 
 import os
-import subprocess
-import sys
 import zipfile
+import subprocess
 from logging import Logger
-
-from poetry_plugin_lambda_build.utils import remove_prefix, run_cmd
+import sys
+from poetry_plugin_lambda_build.utils import run_cmd, remove_prefix
 
 
 def run_python_cmd(
@@ -16,9 +15,8 @@ def run_python_cmd(
     stderr: int = subprocess.PIPE,
     **kwargs,
 ) -> int:
-    filtered_cmd = [c for c in cmd if c]
     return run_cmd(
-        sys.executable, *filtered_cmd, logger=logger, stdout=stdout, stderr=stderr, **kwargs
+        sys.executable, *cmd, logger=logger, stdout=stdout, stderr=stderr, **kwargs
     )
 
 
