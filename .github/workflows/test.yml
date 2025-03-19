@@ -3,11 +3,11 @@ name: Run Tests
 on: [pull_request, workflow_dispatch]
 
 jobs:
-  test_python38:
-    secrets: inherit
-    uses: ./.github/workflows/run_tests_linux.yml
-    with:
-      python-version: "3.8"
+  #test_python38:
+  #  secrets: inherit
+  #  uses: ./.github/workflows/run_tests_linux.yml
+  #  with:
+  #    python-version: "3.8"
   test_python312:
     secrets: inherit
     uses: ./.github/workflows/run_tests_linux.yml
