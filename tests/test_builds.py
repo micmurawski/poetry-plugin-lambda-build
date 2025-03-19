@@ -217,7 +217,7 @@ def test_dir_builds(config: dict, args: dict, assert_files: list, tmp_path: Path
         with cd(tmp_path / "test-project"):
             assert run_poetry_cmd("add", "requests") == 0
             assert run_poetry_cmd("add", "pytest", "--group=test") == 0
-            open(handler_file, "w").close()
+            open(tmp_path / "test-project"/ handler_file, "wb").close()
 
             if PYTHON_VER == "3.8":
                 config["pre-install-script"] = (
