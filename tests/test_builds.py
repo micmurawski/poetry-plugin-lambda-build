@@ -216,7 +216,7 @@ def test_zip_builds(config: dict, args: dict, assert_files: list, tmp_path: Path
 )
 def test_dir_builds(config: dict, args: dict, assert_files: list, tmp_path: Path):
     with cd(tmp_path):
-        handler_file = "test_project/handler.py"
+        handler_file = "src/test_project/handler.py"
         assert run_poetry_cmd("new", "test-project") == 0
         with cd(tmp_path / "test-project"):
             assert run_poetry_cmd("add", "requests") == 0
