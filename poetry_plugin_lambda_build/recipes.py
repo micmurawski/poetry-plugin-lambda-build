@@ -206,7 +206,7 @@ class Builder:
                 container_cmd=cmd,
                 print_safe_cmds=print_safe_cmd,
             )
-            self.cmd.info(f"Coping output to {layer_output_dir}")
+            self.cmd.info(f"Copying output to {layer_output_dir}")
             copy_from_container(
                 src=f"{container.id}:{CONTAINER_CACHE_DIR}/.", dst=layer_output_dir
             )
@@ -338,7 +338,7 @@ class Builder:
         with run_container(
             self.cmd, **self.parameters.get_section("docker"), working_dir="/"
         ) as container:
-            self.cmd.info("Coping content")
+            self.cmd.info("Copying content")
             copy_to_container(f"{CURRENT_WORK_DIR}/.", f"{container.id}:/")
 
             install_in_container_cmd_tmpl = join_cmds(
