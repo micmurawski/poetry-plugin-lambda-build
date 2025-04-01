@@ -185,7 +185,7 @@ class RequirementsExporter:
         content += "\n"
 
         if indexes and self._with_urls:
-            indexes_header = "".join(self.export_indexes())
+            indexes_header = " ".join(self.export_indexes())
 
             if indexes_header:
                 content = indexes_header + "\n" + content
