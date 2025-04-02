@@ -28,6 +28,13 @@ ARGS = {
         None,
         str,
     ),
+    "docker-platform": (
+        "Platform in the format os[/arch[/variant]]. Only used if the method needs to pull the requested image.",
+        True,
+        False,
+        None,
+        str,
+    ),
     "docker-dns": (
         "Set custom DNS servers (comma separated string)",
         True,
