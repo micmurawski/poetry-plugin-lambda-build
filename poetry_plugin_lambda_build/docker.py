@@ -4,7 +4,8 @@ import os
 import tarfile
 from contextlib import contextmanager
 from tempfile import TemporaryDirectory
-from typing import Generator
+from typing import Generator, List, Optional
+import fnmatch
 
 import docker
 from docker.models.containers import Container
@@ -28,18 +29,47 @@ def get_docker_client() -> docker.DockerClient:
     return docker.from_env()
 
 
-def copy_to_container(src: str, dst: str):
+def _should_ignore(path: str, ignore_patterns: Optional[List[str]] = None) -> bool:
+    """Check if a path should be ignored based on the provided patterns."""
+    if not ignore_patterns:
+        return False
+    return any(fnmatch.fnmatch(path, pattern) for pattern in ignore_patterns)
+
+
+def _read_dockerignore_file(file_path: str) -> List[str]:
+    """Read patterns from a .dockerignore file."""
+    if not os.path.exists(file_path):
+        return []
+    
+    patterns = []
+    with open(file_path, 'r') as f:
+        for line in f:
+            line = line.strip()
+            if line and not line.startswith('#'):
+                patterns.append(line)
+    return patterns
+
+
+def copy_to_container(src: str, dst: str, ignore_patterns: Optional[List[str]] = None, dockerignore_file: Optional[str] = None):
     name, dst = dst.split(":")
     container = get_docker_client().containers.get(name)
+
+    # Read patterns from dockerignore file if provided
+    if dockerignore_file:
+        ignore_patterns = ignore_patterns or []
+        ignore_patterns.extend(_read_dockerignore_file(dockerignore_file))
 
     with TemporaryDirectory() as tmp_dir:
         src_name = os.path.basename(src)
         tar_filename = src_name + "_archive.tar"
         tar_path = os.path.join(tmp_dir, tar_filename)
         tar = tarfile.open(tar_path, mode="w")
+        
         with cd(os.path.dirname(src)):
             try:
-                tar.add(src_name)
+                # Check if the file should be ignored
+                if not _should_ignore(src_name, ignore_patterns):
+                    tar.add(src_name)
             finally:
                 tar.close()
 

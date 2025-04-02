@@ -138,6 +138,20 @@ ARGS = {
         None,
         shlex.split,
     ),
+    "dockerignore": (
+        "Comma-separated list of patterns to ignore when copying files to container",
+        True,
+        False,
+        None,
+        comma_separated_collection,
+    ),
+    "dockerignore-file": (
+        "Path to a .dockerignore file to use for filtering files",
+        True,
+        False,
+        None,
+        str,
+    ),
 }
 
 
