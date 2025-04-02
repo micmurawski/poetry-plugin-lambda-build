@@ -93,13 +93,23 @@ def copy_from_container(src: str, dst: str):
 
 
 @contextmanager
-def run_container(logger, **kwargs) -> Generator[Container, None, None]:
+def run_container(logger, local_dependencies: list[str] | None = None, **kwargs) -> Generator[Container, None, None]:
     image: str = kwargs.pop("image")
 
     for k, v in kwargs.items():
         if k in ARGS_PARSERS and v:
             parser = ARGS_PARSERS[k]
             kwargs[k] = parser(v)
+
+    # Handle local dependencies by adding volumes
+    if local_dependencies:
+        volumes = kwargs.get("volumes", {})
+        # e.g. dep = "src/test_project:src/test_project"
+        for dep in local_dependencies:
+            source = dep
+            target = dep
+            volumes[os.path.abspath(source)] = {"bind": target, "mode": "rw"}
+        kwargs["volumes"] = volumes
 
     docker_container: Container = get_docker_client().containers.run(
         image, **kwargs, tty=True, detach=True

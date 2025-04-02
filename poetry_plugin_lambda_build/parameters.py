@@ -198,10 +198,10 @@ class ParametersContainer(dict):
         return super().__getitem__(key)
 
     def get_section(self, section: str) -> dict:
-        return {
+        return{
             remove_prefix(k, section + "-").replace("-", "_"): self[k]
             for k in self
-            if k.startswith(section)
+            if k.startswith(section + "-")
         }
 
     @property
