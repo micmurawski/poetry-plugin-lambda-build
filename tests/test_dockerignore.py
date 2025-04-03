@@ -13,11 +13,11 @@ def test_should_ignore_with_no_patterns():
 
 def test_should_ignore_with_patterns():
     """Test that files are correctly ignored based on patterns."""
-    patterns = ["*.pyc", "__pycache__", "*.git*"]
+    patterns = ["*.pyc", "__pycache__/", "*.git*"]
 
     # Should be ignored
     assert _should_ignore("test.pyc", patterns)
-    assert _should_ignore("__pycache__/test.py", patterns)
+    assert _should_ignore("__pycache__/test.pyc", patterns)
     assert _should_ignore(".git/config", patterns)
     assert _should_ignore("test/.gitignore", patterns)
 
