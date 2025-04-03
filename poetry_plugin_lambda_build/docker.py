@@ -53,6 +53,7 @@ def _read_dockerignore_file(file_path: str) -> List[str]:
 def copy_to_container(src: str, dst: str, ignore_patterns: Optional[List[str]] = None, dockerignore_file: Optional[str] = None):
     name, dst = dst.split(":")
     container = get_docker_client().containers.get(name)
+    container.exec_run(["mkdir", "-p", os.path.dirname(dst)])
 
     # Read patterns from dockerignore file if provided
     if dockerignore_file:
@@ -93,7 +94,7 @@ def copy_from_container(src: str, dst: str):
 
 
 @contextmanager
-def run_container(logger, local_dependencies: list[str] | None = None, **kwargs) -> Generator[Container, None, None]:
+def run_container(logger, local_dependencies: list[str] | None = None, working_dir: str = "/", **kwargs) -> Generator[Container, None, None]:
     image: str = kwargs.pop("image")
 
     for k, v in kwargs.items():
@@ -111,7 +112,7 @@ def run_container(logger, local_dependencies: list[str] | None = None, **kwargs)
         kwargs["volumes"] = volumes
     
     docker_container: Container = get_docker_client().containers.run(
-        image, **kwargs, tty=True, detach=True
+        image, **kwargs, tty=True, detach=True, working_dir=working_dir
     )
     logger.debug(f"Running docker container image: {image}")
     try:
@@ -124,8 +125,8 @@ def run_container(logger, local_dependencies: list[str] | None = None, **kwargs)
 
 
 def exec_run_container(
-    logger, container: Container, container_cmd: list[str], print_safe_cmds: list[str]
-):
+    logger, container: Container, container_cmd: list[str], print_safe_cmds: list[str], working_dir: str = "/"
+):        
     for cmd, print_safe_cmd in zip(
         cmd_split(container_cmd), cmd_split(print_safe_cmds)
     ):
@@ -135,6 +136,7 @@ def exec_run_container(
             stdout=True,
             stderr=True,
             stream=True,
+            workdir=working_dir,
         )
         for line in stream:
             logger.info(line.strip().decode())

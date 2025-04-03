@@ -25,8 +25,8 @@ from poetry_plugin_lambda_build.utils import (compute_checksum, format_cmd,
 from poetry_plugin_lambda_build.zip import create_zip_package
 
 CONTAINER_CACHE_DIR = "/opt/lambda/cache"
+CONTAINER_WORK_DIR = "/opt/lambda/work"
 CURRENT_WORK_DIR = os.getcwd()
-
 
 class BuildLambdaPluginError(Exception):
     pass
@@ -196,7 +196,8 @@ class Builder:
         self.cmd.info("Running docker container...")
         with run_container(
             self.cmd, **self.parameters.get_section("docker"),
-            local_dependencies=get_local_dependencies(self.cmd, self.parameters)
+            local_dependencies=get_local_dependencies(self.cmd, self.parameters),
+            working_dir=CONTAINER_WORK_DIR
         ) as container:
             copy_to_container(
                 src=requirements_path,
@@ -221,6 +222,7 @@ class Builder:
                 container=container,
                 container_cmd=cmd,
                 print_safe_cmds=print_safe_cmd,
+                working_dir=CONTAINER_WORK_DIR
             )
             self.cmd.info(f"Copying output to {layer_output_dir}")
             copy_from_container(
@@ -298,11 +300,12 @@ class Builder:
         self.cmd.info("Running docker container...")
         with run_container(
             self.cmd, **self.parameters.get_section("docker"),
-            local_dependencies=get_local_dependencies(self.cmd, self.parameters)
+            local_dependencies=get_local_dependencies(self.cmd, self.parameters),
+            working_dir=CONTAINER_WORK_DIR
         ) as container:
             copy_to_container(
                 src=f"{CURRENT_WORK_DIR}/.",
-                dst=f"{container.id}:/",
+                dst=f"{container.id}:{CONTAINER_WORK_DIR}/",
                 ignore_patterns=self.parameters.get("dockerignore"),
                 dockerignore_file=self.parameters.get("dockerignore-file")
             )
@@ -317,7 +320,7 @@ class Builder:
                 install_in_container_no_deps_cmd_tmpl, output_dir=CONTAINER_CACHE_DIR
             )
 
-            exec_run_container(self.cmd, container, cmd, print_safe_cmd)
+            exec_run_container(self.cmd, container, cmd, print_safe_cmd, working_dir=CONTAINER_WORK_DIR)
             copy_from_container(
                 src=f"{container.id}:{CONTAINER_CACHE_DIR}/.", dst=package_dir
             )
@@ -363,11 +366,12 @@ class Builder:
         self.cmd.info("Running docker container...")
         with run_container(
             self.cmd, **self.parameters.get_section("docker"),
-            local_dependencies=get_local_dependencies(self.cmd, self.parameters)
+            local_dependencies=get_local_dependencies(self.cmd, self.parameters),
+            working_dir=CONTAINER_WORK_DIR
         ) as container:
             copy_to_container(
                 f"{CURRENT_WORK_DIR}/.",
-                f"{container.id}:/",
+                f"{container.id}:{CONTAINER_WORK_DIR}/",
                 ignore_patterns=self.parameters.get("dockerignore"),
                 dockerignore_file=self.parameters.get("dockerignore-file")
             )
@@ -405,6 +409,7 @@ class Builder:
                 container=container,
                 container_cmd=cmd,
                 print_safe_cmds=print_safe_cmd,
+                working_dir=CONTAINER_WORK_DIR
             )
             copy_from_container(
                 src=f"{container.id}:{CONTAINER_CACHE_DIR}/.", dst=package_dir
