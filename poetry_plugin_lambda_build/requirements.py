@@ -145,7 +145,7 @@ class RequirementsExporter:
                 if package.develop:
                     line = f"-e {dependency_uri}"
                 else:
-                    line = f"{package.complete_name} @ {dependency_uri}"
+                    line = f"{package.complete_name}@{dependency_uri}"
             else:
                 line = f"{package.complete_name}=={package.version}"
 
@@ -189,6 +189,7 @@ class RequirementsExporter:
 
             if indexes_header:
                 content = indexes_header + "\n" + content
+
         return content
 
     _export_constraints_txt = partialmethod(
@@ -215,9 +216,9 @@ class RequirementsExporter:
                 not has_pypi_repository
                 and repository is self._poetry.pool.repositories[0]
             ):
-                args += ["--index-url", f"{url}\n"]
+                args += ["--index-url", f" {url}\n"]
             else:
-                args += ["--extra-index-url", f"{url}\n"]
+                args += ["--extra-index-url", f" {url}\n"]
         return args
 
     def export_local_dependencies(self) -> list[str]:

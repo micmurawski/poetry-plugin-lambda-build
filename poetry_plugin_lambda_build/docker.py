@@ -104,13 +104,12 @@ def run_container(logger, local_dependencies: list[str] | None = None, **kwargs)
     # Handle local dependencies by adding volumes
     if local_dependencies:
         volumes = kwargs.get("volumes", {})
-        # e.g. dep = "src/test_project:src/test_project"
         for dep in local_dependencies:
             source = dep
             target = dep
             volumes[os.path.abspath(source)] = {"bind": target, "mode": "rw"}
         kwargs["volumes"] = volumes
-
+    
     docker_container: Container = get_docker_client().containers.run(
         image, **kwargs, tty=True, detach=True
     )
