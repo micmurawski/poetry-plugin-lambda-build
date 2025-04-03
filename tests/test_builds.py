@@ -221,6 +221,8 @@ def test_dir_builds(config: dict, args: dict, assert_files: list, tmp_path: Path
         with cd(tmp_path / "test-project"):
             assert run_poetry_cmd("add", "requests") == 0
             assert run_poetry_cmd("add", "pytest", "--group=test") == 0
+            assert run_poetry_cmd("source", "add", "--priority=explicit", "pytorch-gpu-src", "https://download.pytorch.org/whl/cu118") == 0
+            assert run_poetry_cmd("add", "--source", "pytorch-gpu-src", "add", "torch") == 0
             open(handler_file, "w").close()
 
             if PYTHON_VER == "3.8":
