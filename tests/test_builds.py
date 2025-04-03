@@ -194,12 +194,9 @@ def test_zip_builds(config: dict, args: dict, assert_files: list, tmp_path: Path
         with cd(tmp_path / "test-project"):
             assert run_poetry_cmd("add", "requests") == 0
             assert run_poetry_cmd("add", "pytest", "--group=test") == 0
+            assert run_poetry_cmd("source", "add", "--priority=explicit", "boto3-src", "https://pypi.python.org/simple") == 0
+            assert run_poetry_cmd("add", "boto3", "--source", "boto3-src") == 0
             open(handler_file, "wb").close()
-
-            if PYTHON_VER == "3.8":
-                config["pre-install-script"] = (
-                    "python3 -m pip install urllib3<2.0 -U -q"
-                )
 
             if config:
                 update_pyproject_toml(**config)
@@ -221,12 +218,9 @@ def test_dir_builds(config: dict, args: dict, assert_files: list, tmp_path: Path
         with cd(tmp_path / "test-project"):
             assert run_poetry_cmd("add", "requests") == 0
             assert run_poetry_cmd("add", "pytest", "--group=test") == 0
+            assert run_poetry_cmd("source", "add", "--priority=explicit", "boto3-src", "https://pypi.python.org/simple") == 0
+            assert run_poetry_cmd("add", "boto3", "--source", "boto3-src") == 0
             open(handler_file, "w").close()
-
-            if PYTHON_VER == "3.8":
-                config["pre-install-script"] = (
-                    "python3 -m pip install urllib3<2.0 -U -q"
-                )
 
             if config:
                 update_pyproject_toml(**config)

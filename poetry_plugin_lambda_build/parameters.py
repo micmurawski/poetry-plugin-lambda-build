@@ -138,6 +138,20 @@ ARGS = {
         None,
         shlex.split,
     ),
+    "dockerignore": (
+        "Comma-separated list of patterns to ignore when copying files to container",
+        True,
+        False,
+        None,
+        comma_separated_collection,
+    ),
+    "dockerignore-file": (
+        "Path to a .dockerignore file to use for filtering files",
+        True,
+        False,
+        None,
+        str,
+    ),
 }
 
 
@@ -184,10 +198,10 @@ class ParametersContainer(dict):
         return super().__getitem__(key)
 
     def get_section(self, section: str) -> dict:
-        return {
+        return{
             remove_prefix(k, section + "-").replace("-", "_"): self[k]
             for k in self
-            if k.startswith(section)
+            if k.startswith(section + "-")
         }
 
     @property

@@ -145,7 +145,7 @@ class RequirementsExporter:
                 if package.develop:
                     line = f"-e {dependency_uri}"
                 else:
-                    line = f"{package.complete_name} @ {dependency_uri}"
+                    line = f"{package.complete_name}@{dependency_uri}"
             else:
                 line = f"{package.complete_name}=={package.version}"
 
@@ -185,10 +185,11 @@ class RequirementsExporter:
         content += "\n"
 
         if indexes and self._with_urls:
-            indexes_header = " ".join(self.export_indexes())
+            indexes_header = "".join(self.export_indexes())
 
             if indexes_header:
                 content = indexes_header + "\n" + content
+
         return content
 
     _export_constraints_txt = partialmethod(
@@ -215,7 +216,35 @@ class RequirementsExporter:
                 not has_pypi_repository
                 and repository is self._poetry.pool.repositories[0]
             ):
-                args += ["--index-url", f"{url}\n"]
+                args += ["--index-url", f" {url}\n"]
             else:
-                args += ["--extra-index-url", f"{url}\n"]
+                args += ["--extra-index-url", f" {url}\n"]
         return args
+
+    def export_local_dependencies(self) -> list[str]:
+        python_marker = parse_marker(
+            create_nested_marker(
+                "python_version", self._poetry.package.python_constraint
+            )
+        )
+        if self._poetry.locker.is_locked_groups_and_markers():
+            dependency_package_iterator = get_project_dependency_packages2(
+                self._poetry.locker,
+                project_python_marker=python_marker,
+                groups=set(self._groups),
+                extras=self._extras,
+            )
+        else:
+            root = self._poetry.package.with_dependency_groups(
+                list(self._groups), only=True
+            )
+            dependency_package_iterator = get_project_dependency_packages(
+                self._poetry.locker,
+                project_requires=root.all_requires,
+                root_package_name=root.name,
+                project_python_marker=python_marker,
+                extras=self._extras,
+            )
+        for dependency_package in dependency_package_iterator:    
+            if dependency_package.package.source_type == "directory":
+                yield dependency_package.dependency.source_url

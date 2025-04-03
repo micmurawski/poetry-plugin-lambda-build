@@ -90,28 +90,30 @@ Description:
   Execute to build lambda lambda artifacts
 
 Usage:
-  build-lambda [options] [--] [<docker-image> [<docker-entrypoint> [<docker-environment> [<docker-dns> [<docker-network> [<docker-network-mode> [<docker-platform> [<package-artifact-path> [<package-install-dir> [<function-artifact-path> [<function-install-dir> [<layer-artifact-path> [<layer-install-dir> [<only> [<without> [<with> [<zip-compresslevel> [<zip-compression> [<pre-install-script>]]]]]]]]]]]]]]]]]]]
+  build-lambda [options] [--] [<docker-image> [<docker-entrypoint> [<docker-environment> [<docker-dns> [<docker-network> [<docker-network-mode> [<docker-platform> [<package-artifact-path> [<package-install-dir> [<function-artifact-path> [<function-install-dir> [<layer-artifact-path> [<layer-install-dir> [<only> [<without> [<with> [<zip-compresslevel> [<zip-compression> [<pre-install-script> [<dockerignore> [<dockerignore-file>]]]]]]]]]]]]]]]]]]]]]
 
 Arguments:
-  docker-image               The image to run
-  docker-entrypoint          The entrypoint for the container (comma separated string) [default: "/bin/bash"]
-  docker-environment         Environment variables to set inside the container (comma separated string) ex. VAR_1=VALUE_1,VAR_2=VALUE_2
-  docker-dns                 Set custom DNS servers (comma separated string)
-  docker-network             The name of the network this container will be connected to at creation time [default: "host"]
-  docker-network-mode        Network-mode
-  docker-platform            Platform in the format os[/arch[/variant]]. Only used if the method needs to pull the requested image.
-  package-artifact-path      Output package path (default: package.zip). Set the '.zip' extension to wrap the artifact into a zip package otherwise, output will be created in the directory. [default: "package.zip"]
-  package-install-dir        Installation directory inside artifact for single package [default: ""]
-  function-artifact-path     Output function package path. Set the '.zip' extension to wrap the artifact into a zip package otherwise, output will be created in the directory.
-  function-install-dir       Installation directory inside artifact for function package [default: ""]
-  layer-artifact-path        Output layer package path. Set the '.zip' extension to wrap the artifact into a zip package otherwise, output will be created in the directory.
-  layer-install-dir          Installation directory inside artifact for layer package [default: ""]
-  only                       The only dependency groups to include
-  without                    The dependency groups to ignore
-  with                       The optional dependency groups to include
-  zip-compresslevel          None (default for the given compression type) or an integer specifying the level to pass to the compressor. When using ZIP_STORED or ZIP_LZMA this keyword has no effect. When using ZIP_DEFLATED integers 0 through 9 are accepted. When using ZIP_BZIP2 integers 1 through 9 are accepted.
-  zip-compression            ZIP_STORED (no compression), ZIP_DEFLATED (requires zlib), ZIP_BZIP2 (requires bz2) or ZIP_LZMA (requires lzma) [default: "ZIP_STORED"]
-  pre-install-script         The script that is executed before installation.
+  docker-image                   The image to run
+  docker-entrypoint              The entrypoint for the container (comma separated string) [default: "/bin/bash"]
+  docker-environment             Environment variables to set inside the container (comma separated string) ex. VAR_1=VALUE_1,VAR_2=VALUE_2
+  docker-dns                     Set custom DNS servers (comma separated string)
+  docker-network                 The name of the network this container will be connected to at creation time [default: "host"]
+  docker-network-mode            Network-mode
+  docker-platform                Platform in the format os[/arch[/variant]]. Only used if the method needs to pull the requested image.
+  package-artifact-path          Output package path (default: package.zip). Set the '.zip' extension to wrap the artifact into a zip package otherwise, output will be created in the directory. [default: "package.zip"]
+  package-install-dir            Installation directory inside artifact for single package [default: ""]
+  function-artifact-path         Output function package path. Set the '.zip' extension to wrap the artifact into a zip package otherwise, output will be created in the directory.
+  function-install-dir           Installation directory inside artifact for function package [default: ""]
+  layer-artifact-path            Output layer package path. Set the '.zip' extension to wrap the artifact into a zip package otherwise, output will be created in the directory.
+  layer-install-dir              Installation directory inside artifact for layer package [default: ""]
+  only                           The only dependency groups to include
+  without                        The dependency groups to ignore
+  with                           The optional dependency groups to include
+  zip-compresslevel              None (default for the given compression type) or an integer specifying the level to pass to the compressor. When using ZIP_STORED or ZIP_LZMA this keyword has no effect. When using ZIP_DEFLATED integers 0 through 9 are accepted. When using ZIP_BZIP2 integers 1 through 9 are accepted.
+  zip-compression                ZIP_STORED (no compression), ZIP_DEFLATED (requires zlib), ZIP_BZIP2 (requires bz2) or ZIP_LZMA (requires lzma) [default: "ZIP_STORED"]
+  pre-install-script             The script that is executed before installation.
+  dockerignore                   Comma-separated list of patterns to ignore when copying files to container
+  dockerignore-file              Path to a .dockerignore file to use for filtering files
 
 Options:
       --no-checksum              Enable to suppress checksum checking

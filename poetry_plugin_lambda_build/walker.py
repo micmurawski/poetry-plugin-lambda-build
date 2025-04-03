@@ -243,7 +243,6 @@ def get_locked_package(
             for package in compatible_candidates
             if package in overlapping_candidates
         ]
-        #raise Exception(overlapping_candidates, filtered_compatible_candidates, not filtered_compatible_candidates)
         if not filtered_compatible_candidates:
             # TODO: Support this case:
             # https://github.com/python-poetry/poetry-plugin-export/issues/183
