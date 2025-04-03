@@ -89,6 +89,7 @@ __pycache__/
 def test_should_ignore_with_complex_patterns():
     """Test that complex patterns are correctly handled."""
     patterns = [
+        "*.pyc",
         "**/*.pyc",
         "**/__pycache__/**",
         "**/.git/**",
