@@ -38,7 +38,7 @@ class RequirementsExporter:
     def __init__(self, poetry: Poetry, io: IO, groups: list[str] | None = None) -> None:
         self._poetry = poetry
         self._io = io
-        self._with_hashes = False
+        self._with_hashes = True
         self._with_credentials = False
         self._with_urls = True
         self._extras: Collection[NormalizedName] = ()
