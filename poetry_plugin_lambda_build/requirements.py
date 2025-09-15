@@ -161,7 +161,7 @@ class RequirementsExporter:
             ):
                 indexes.add(package.source_url.rstrip("/"))
 
-            if package.files and self._with_hashes:
+            if package.files and self._with_hashes and not is_direct_remote_reference:
                 hashes = []
                 for f in package.files:
                     h = f["hash"]
