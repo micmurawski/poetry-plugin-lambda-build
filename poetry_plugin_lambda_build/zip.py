@@ -21,7 +21,7 @@ def create_zip_package(dir, output, exclude=None, **kwargs):
             f"*{os.sep}__pycache__{os.sep}*",
             f"*{os.sep}__pycache__",
             "__pycache__",
-            f"*.pyc",
+            "*.pyc",
         ]
 
     def should_exclude(path, patterns):
