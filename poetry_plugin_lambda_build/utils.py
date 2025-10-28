@@ -13,6 +13,17 @@ from pathlib import Path
 from typing import Generator
 
 
+DEFAULT_EXCLUDE_PATTERNS = [
+    f"*{os.sep}__pycache__{os.sep}*",
+    f"*{os.sep}__pycache__",
+    f"**{os.sep}__pycache__{os.sep}*",
+    f"**{os.sep}__pycache__",
+    "*.pyc",
+    f"**{os.sep}*.pyc",
+    "__pycache__",
+]
+
+
 def join_cmds(*cmds: list[list[str]], joiner: str = "&&") -> list[str]:
     _cmds = list(filter(lambda x: x, cmds))
     result = []
@@ -53,7 +64,7 @@ def remove_suffix(text: str, suffix: str) -> str:
 
 
 def mask_string(s: str) -> str:
-    return f'{s[:14]}{"*" * len(s)}'
+    return f"{s[:14]}{'*' * len(s)}"
 
 
 def run_cmd(
@@ -139,3 +150,22 @@ def compute_checksum(path: str | Path, exclude: None | list[str | Path] = None) 
     else:
         m.update(str(os.stat(path)).encode())
     return m.hexdigest()
+
+
+def should_exclude(path: str, dir: str, patterns: list[str] | None = None) -> bool:
+    patterns = patterns or DEFAULT_EXCLUDE_PATTERNS
+    rel_path = os.path.relpath(path, dir)
+    rel_path_os = rel_path
+    rel_path_fwd = (
+        rel_path.replace("\\", "/").replace("/", os.sep) if os.sep != "/" else rel_path
+    )
+
+    file_name = os.path.basename(path)
+    for pattern in patterns:
+        if (
+            fnmatch(rel_path_os, pattern)
+            or fnmatch(rel_path_fwd, pattern)
+            or fnmatch(file_name, pattern)
+        ):
+            return True
+    return False
