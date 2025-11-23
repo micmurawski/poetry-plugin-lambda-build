@@ -22,7 +22,7 @@ jobs:
       - name: Install dependencies
         run: |
           python3 -m pip install --upgrade pip
-          python3 -m pip install poetry==2.1.1
+          python3 -m pip install poetry==2.2.1
           poetry config virtualenvs.create false
           poetry install
       - name: Install
