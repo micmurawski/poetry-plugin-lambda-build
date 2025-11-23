@@ -6,7 +6,7 @@ authors = ["Michal Murawski <mmurawski777@gmail.com>"]
 readme = "README.md"
 
 [tool.poetry.dependencies]
-python = "^3.9"
+python = ">=3.9,<4.0"
 docker = "^7.1.0"
 
 [tool.poetry.group.dev.dependencies]
