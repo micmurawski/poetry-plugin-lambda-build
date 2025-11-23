@@ -1,7 +1,7 @@
 [project]
 name = "poetry-lambda-plugin"
 version = "2.1.2"
-description = "abc"
+description = "The plugin for poetry that allows you to build zip packages suited for serverless deployment like AWS Lambda, Google App Engine, Azure App Service, and more..."
 authors = [
     {name = "Michał Murawski",email = "mmurawski777@gmail.com"}
 ]
