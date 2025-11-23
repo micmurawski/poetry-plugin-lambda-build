@@ -14,12 +14,9 @@ compression = {
 }
 
 
-def create_zip_package(dir, output, exclude=None, **kwargs):
+def create_zip_package(dir: str, output: str, exclude: list[str], **kwargs):
     if "compression" in kwargs:
         kwargs["compression"] = compression[kwargs["compression"]]
-
-    if exclude is None:
-        exclude = ["*.pyc", "*__pycache__/*"]
 
     with ZipFile(output, "w", **kwargs) as zip_file:
         for i in os.walk(dir):

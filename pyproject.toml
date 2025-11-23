@@ -1,23 +1,35 @@
-[tool.poetry]
-name = "poetry-plugin-lambda-build"
-version = "2.1.1"
+[project]
+name = "poetry-lambda-plugin"
+version = "2.1.2"
 description = "The plugin for poetry that allows you to build zip packages suited for serverless deployment like AWS Lambda, Google App Engine, Azure App Service, and more..."
-authors = ["Michal Murawski <mmurawski777@gmail.com>"]
+authors = [
+    {name = "Michał Murawski",email = "mmurawski777@gmail.com"}
+]
+license = {text = "MIT"}
+
 readme = "README.md"
+requires-python = ">=3.9,<4.0"
+dependencies = [
+    "docker (>=7.1.0,<8.0.0)"
+]
 
-[tool.poetry.dependencies]
-python = "^3.9"
-docker = "^7.1.0"
+[tool.poetry]
+packages = [{include = "poetry_plugin_lambda_build"}]
 
-[tool.poetry.group.dev.dependencies]
-ruff = "^0.5.6"
-pytest = "^8.0.1"
-poetry = "^2.0.0"
-pytest-cov = "^5.0.0"
+
+[dependency-groups]
+dev = [
+    "ruff (>=0.5.6,<0.6.0)",
+    "pytest (>=8.0.1,<9.0.0)",
+    "poetry (>=2.0.0,<3.0.0)",
+    "pytest-cov (>=5.0.0,<6.0.0)"
+]
+
 
 [build-system]
-requires = ["poetry-core"]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
 build-backend = "poetry.core.masonry.api"
+
 
 [tool.poetry.plugins."poetry.application.plugin"]
 build-lambda = "poetry_plugin_lambda_build.plugin:LambdaPlugin"
