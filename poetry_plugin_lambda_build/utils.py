@@ -13,6 +13,12 @@ from pathlib import Path
 from typing import Generator
 
 
+DEFAULT_EXCLUDE = [
+    "*.pyc",
+    f"*{os.path.sep}__pycache__{os.path.sep}*",
+]
+
+
 def join_cmds(*cmds: list[list[str]], joiner: str = "&&") -> list[str]:
     _cmds = list(filter(lambda x: x, cmds))
     result = []

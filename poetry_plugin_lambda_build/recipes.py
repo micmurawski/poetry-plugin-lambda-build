@@ -21,7 +21,7 @@ from poetry_plugin_lambda_build.parameters import ParametersContainer
 from poetry_plugin_lambda_build.requirements import RequirementsExporter
 from poetry_plugin_lambda_build.utils import (compute_checksum, format_cmd,
                                               join_cmds, mask_string,
-                                              remove_suffix, run_cmds)
+                                              remove_suffix, run_cmds, DEFAULT_EXCLUDE)
 from poetry_plugin_lambda_build.zip import create_zip_package
 
 CONTAINER_CACHE_DIR = "/opt/lambda/cache"
@@ -230,6 +230,8 @@ class Builder:
             )
 
     def _create_target(self, dir: str, target: str, exclude: None | list = None):
+        exclude = exclude or DEFAULT_EXCLUDE
+        
         if target.endswith(".zip"):
             create_zip_package(
                 dir=dir,
@@ -292,7 +294,7 @@ class Builder:
             self._create_target(
                 dir=remove_suffix(layer_output_dir, install_dir),
                 target=target,
-                exclude=[requirements_path],
+                exclude=[requirements_path] + DEFAULT_EXCLUDE,
             )
             self.cmd.info(f"target successfully built: {target}...")
 
